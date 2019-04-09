@@ -1,3 +1,10 @@
+'''
+damageTiles.py
+
+@author Adonis Gonzalez
+'''
+
+
 from PIL import Image
 import numpy as np
 import cv2
@@ -56,7 +63,7 @@ def size_tiles(num_pixels, w,h):
     #actual_tile_size = math.ceil(num_pixels / num_tiles)
     return num_tiles, w, h
 
-def cutting_images(path,img_shape, offset, img ):
+def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage):
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i #1024 * 0 = 0
@@ -65,81 +72,75 @@ def cutting_images(path,img_shape, offset, img ):
             stop_x = offset[0] * (j + 1) # 1024 *(1) 1024
             cropped_img = img[start_y:stop_y,start_x:stop_x ]
 
-            name =  (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+            '''
             if os.path.isfile(name):
                 print("exist this files")
                 name = (path + '/' + "name" + str(i) + "_" + str(j) + ".png")
-            cv2.imwrite(name, cropped_img)
+            '''
 
-def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
+            if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
+                print("here_adonis")
+                if not os.path.exists(path+"/"+name_damage):
+                    os.mkdir(path+"/"+name_damage)
+                    print("folder created: ",name_damage)
+                    name = (path+"/"+name_damage + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+                    cv2.imwrite(name, cropped_img)
+                else:
+                    name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+                    cv2.imwrite(name, cropped_img)
+
+            else:
+                name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+                cv2.imwrite(name, cropped_img)
+
+def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage):
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i
             stop_y = offset[1] * (i + 1)
             start_x = offset[0] * j
             stop_x = offset[0] * (j + 1)
-            '''
-            print("-----cccccc----")
-            print("this is start_y: ", start_y)
-            print("this is stop_y: ", stop_y)
-            print("this is start_x: ", start_x)
-            print("this is stop_x: ", stop_x)
-            new = img[start_y:stop_y, start_x:stop_x]
-            print("aa")
-            #print(new)
-            print("----cccccccccc-----")
-            print(xmin, xmax)
-            '''
-            '''
-            for i in (img[start_y:stop_y]):
-                for j in (img[start_x:stop_x]):
-            '''
 
+            cropped_img = img[start_y:stop_y, start_x:stop_x]
+            name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
 
-            '''
-            if(xmin < start_x and xmin < start_y and ymin < start_x and ymin < start_y or xmin < stop_x and xmin <stop_y\
-                    and ymin < stop_x and ymin < stop_y):
-                print("yes we are inside")
-
-            if(xmin < start_x and xmin < start_y and ymin < start_x and ymin < start_y or xmin < stop_x and xmin <stop_y\
-                    and ymin < stop_x and ymin < stop_y):
-                print("yes we are inside")
-
-            if(xmax < stop_x and xmax < stop_y and ymax < stop_x and ymax < stop_y and xmax > start_x and xmax > start_y\
-                    and ymax> start_x and ymax>start_y):
-                print("we are inside 2")
-
-            '''
             first = (xmin, ymin)
             second= (xmin, ymax)
             third = (xmax, ymin)
             fourth = (xmax, ymax)
 
-
             t_first = (start_x, start_y)
             t_second = (start_x, stop_y)
             t_third = (stop_x, start_y)
             t_fourth = (stop_x, stop_y)
+
             print("---------------------------------------------------------------------------------")
             print("tile: ", [i],[j])
-            print("here start ananotations points---")
-
-
+            print("----here start ananotations points---")
             print(first)
             print(second)
             print(third)
             print(fourth)
-
-            print("here start tiles points---")
-
+            print("---here start tiles points---")
             print(t_first)
             print(t_second)
             print(t_third)
             print(t_fourth)
 
+            if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
+                print("here_adonis")
+            '''
             if(start_x < xmax) and (stop_x>xmin) and (start_y < ymax) and (stop_y > ymin):
                 print("here_adonis")
 
+                if not os.path.exists(path+"/"+name_damage):
+                    os.mkdir(path+"/"+name_damage)
+                    cv2.imwrite(name, cropped_img)
+
+            if not os.path.exists(path+"/"+"no_damage"):
+                os.mkdir(path+"/"+"no_damage")
+                cv2.imwrite(name, cropped_img)
+            '''
             print("---------------------------------------------------------------------------------")
 
 def saving_images():
@@ -170,7 +171,7 @@ if __name__ == "__main__":
             print("img_shape : ", img_shape)
             #print("img : ", img) #this is a full matrix of image
 
-            num_tiles, w, h =  size_tiles(size, 1024, 1024)
+            num_tiles, w, h =  size_tiles(size, 1500, 1500)
             print("number of tile :",num_tiles)
             print("this is w :",w)
             print("this is h :", h)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
                 os.makedirs('prueba1/tails')
             '''
 
-            cutting_images(dir, img_shape, offset, img)
+            #cutting_images(dir, img_shape, offset, img)
             print('this is this image', filename)
 
             namexml = (img_name.split('.jpg')[0])
@@ -198,6 +199,7 @@ if __name__ == "__main__":
                     for child_of_object in child_of_root:
                         if child_of_object.tag == 'name':
                             category_id = child_of_object.text
+                            name_damage=(category_id.split(' ')[0]) #just for use SD intead SD1 levels
                             print("this is the damage: ", category_id)
 
                         if child_of_object.tag == 'bndbox':
@@ -210,18 +212,22 @@ if __name__ == "__main__":
                                     xmax[category_id] = int(child_of_root.text)
                                     print("this is de xmax: ", xmax[category_id])
 
-
                                 if child_of_root.tag == 'ymin':
                                     ymin[category_id] = int(child_of_root.text)
                                     print("this is de ymin: ", ymin[category_id])
-
 
                                 if child_of_root.tag == 'ymax':
                                     ymax[category_id] = int(child_of_root.text)
                                     print("this is de ymax: ", ymax[category_id])
 
 
-                    finding_annotations(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],ymax[category_id])
+                    finding_annotations(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
+                                        ymin[category_id],ymax[category_id],name_damage)
+
+                    #cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                     #                   ymin[category_id], ymax[category_id], name_damage)
+
+
 
 
 
