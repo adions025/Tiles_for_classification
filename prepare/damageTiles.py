@@ -1,7 +1,15 @@
 '''
 damageTiles.py
 
-@author Adonis Gonzalez
+Written by Adonis Gonzalez
+------------------------------------------------------------
+
+Usage:
+$ python damageTiles.py 1500 1500
+
+ default args
+ 1 .weight = 1500
+ 2. height = 1500
 '''
 
 
@@ -13,6 +21,7 @@ import os
 import os.path as path
 import sys
 import xml.etree.cElementTree as ET
+from sys import argv
 
 
 
@@ -158,6 +167,43 @@ def saving_images():
 
 if __name__ == "__main__":
 
+
+    import argparse
+    #weight, height = argv
+    WEIGHT = 1500
+    HEIGHT = 1500
+    parser = argparse.ArgumentParser(description='Process dataset for image classification')
+    '''
+    parser.add_argument("weight",
+                        default=weight,
+                        metavar="-weight",
+                        type=int,
+                        help="'1500'")
+
+    parser.add_argument("height",
+                        default=height,
+                        metavar="-height",
+                        type=int,
+                        help="'1500'")
+    
+    '''
+    #parser.add_argument('--weight', help='1500', default=weight)
+    #parser.add_argument('--height', help='1500', default=height)
+    parser.add_argument('--weight',required=False,
+                        default=WEIGHT,
+                        metavar="N",
+                        type=int,
+                        help='weigth 1500')
+
+    parser.add_argument('--height', required=False,
+                        default=HEIGHT,
+                        metavar="N",
+                        type=int,
+                        help='height 1500')
+
+
+    args = parser.parse_args()
+
     grabNamesImages()
 
     for dir in path:
@@ -171,7 +217,8 @@ if __name__ == "__main__":
             print("img_shape : ", img_shape)
             #print("img : ", img) #this is a full matrix of image
 
-            num_tiles, w, h =  size_tiles(size, 1500, 1500)
+            num_tiles, w, h =  size_tiles(size, args.weight, args.height)
+
             print("number of tile :",num_tiles)
             print("this is w :",w)
             print("this is h :", h)
