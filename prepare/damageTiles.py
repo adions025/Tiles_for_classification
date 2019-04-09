@@ -69,60 +69,78 @@ def cutting_images(path,img_shape, offset, img ):
             if os.path.isfile(name):
                 print("exist this files")
                 name = (path + '/' + "name" + str(i) + "_" + str(j) + ".png")
-            #cv2.imwrite(name, cropped_img)
+            cv2.imwrite(name, cropped_img)
 
 def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i
-            print("---------")
-            print( "this is start_y: ",start_y)
-            print("---------")
-
             stop_y = offset[1] * (i + 1)
-            print("---------")
-            print("this is stop_y: ", stop_y)
-            print("---------")
-
             start_x = offset[0] * j
-
-            print("---------")
-            print("this is start_x: ", start_x)
-            print("---------")
-
             stop_x = offset[0] * (j + 1)
-
-            print("---------")
+            '''
+            print("-----cccccc----")
+            print("this is start_y: ", start_y)
+            print("this is stop_y: ", stop_y)
+            print("this is start_x: ", start_x)
             print("this is stop_x: ", stop_x)
-            print("---------")
+            new = img[start_y:stop_y, start_x:stop_x]
+            print("aa")
+            #print(new)
+            print("----cccccccccc-----")
             print(xmin, xmax)
-            if(xmin >= start_x and xmin >= start_y and ymin >= start_x and ymin >= start_y ):
-                print("si entro")
-            if(xmin,ymin) >= (start_x,start_y):
-                print("entra")
-            print("q pasa :",(xmin, ymin),(start_x, start_y))
+            '''
+            '''
+            for i in (img[start_y:stop_y]):
+                for j in (img[start_x:stop_x]):
+            '''
 
-            if(xmax<= stop_x and xmax<=start_y and ymin<=stop_x and ymin<=start_y):
-                print("si entro 2")
 
-            if (xmax,ymin) <= (stop_x,start_y):
-                print("entra 2")
+            '''
+            if(xmin < start_x and xmin < start_y and ymin < start_x and ymin < start_y or xmin < stop_x and xmin <stop_y\
+                    and ymin < stop_x and ymin < stop_y):
+                print("yes we are inside")
 
-            print("q pasa 2: ",(xmax, ymin),(stop_x, start_y))
+            if(xmin < start_x and xmin < start_y and ymin < start_x and ymin < start_y or xmin < stop_x and xmin <stop_y\
+                    and ymin < stop_x and ymin < stop_y):
+                print("yes we are inside")
 
-            if(xmin>=stop_x and xmin>=stop_y and ymax>=start_x and ymax>=stop_y):
-                print("si entro 3")
+            if(xmax < stop_x and xmax < stop_y and ymax < stop_x and ymax < stop_y and xmax > start_x and xmax > start_y\
+                    and ymax> start_x and ymax>start_y):
+                print("we are inside 2")
 
-            if(xmax<=stop_x and xmax<= stop_y and ymax <= stop_x and ymax<=stop_y):
-                print("si entro 4")
+            '''
+            first = (xmin, ymin)
+            second= (xmin, ymax)
+            third = (xmax, ymin)
+            fourth = (xmax, ymax)
 
-            if (xmin,ymin) >= (start_x,start_y) and (xmax,ymin) <= (stop_x,start_y) \
-                    or (xmin,ymax) >= (start_x,stop_y) and (xmax,ymax) <= (stop_x,stop_y):
-                print("manono")
-                cropped_img = img[start_y:stop_y,start_x:stop_x ]
-                name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
-                cv2.imwrite(name, cropped_img)
 
+            t_first = (start_x, start_y)
+            t_second = (start_x, stop_y)
+            t_third = (stop_x, start_y)
+            t_fourth = (stop_x, stop_y)
+            print("---------------------------------------------------------------------------------")
+            print("tile: ", [i],[j])
+            print("here start ananotations points---")
+
+
+            print(first)
+            print(second)
+            print(third)
+            print(fourth)
+
+            print("here start tiles points---")
+
+            print(t_first)
+            print(t_second)
+            print(t_third)
+            print(t_fourth)
+
+            if(start_x < xmax) and (stop_x>xmin) and (start_y < ymax) and (stop_y > ymin):
+                print("here_adonis")
+
+            print("---------------------------------------------------------------------------------")
 
 def saving_images():
     print("saving-----")
@@ -135,6 +153,7 @@ def saving_images():
             if 'jpg' in img:
                 #cutting_images(img_shape, offset, img)
                 print("nice")
+
 
 if __name__ == "__main__":
 
@@ -151,7 +170,7 @@ if __name__ == "__main__":
             print("img_shape : ", img_shape)
             #print("img : ", img) #this is a full matrix of image
 
-            num_tiles, w, h =  size_tiles(size, 2000, 2000)
+            num_tiles, w, h =  size_tiles(size, 1024, 1024)
             print("number of tile :",num_tiles)
             print("this is w :",w)
             print("this is h :", h)
@@ -189,7 +208,7 @@ if __name__ == "__main__":
 
                                 if child_of_root.tag == 'xmax':
                                     xmax[category_id] = int(child_of_root.text)
-                                    print("this is de xmiX: ", xmax[category_id])
+                                    print("this is de xmax: ", xmax[category_id])
 
 
                                 if child_of_root.tag == 'ymin':
