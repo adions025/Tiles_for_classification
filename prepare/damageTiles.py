@@ -5,9 +5,9 @@ Written by Adonis Gonzalez
 ------------------------------------------------------------
 
 Usage:
-$ python damageTiles.py 1500 1500
+$ usage: damageTiles.py [--weight N] [--height N]
 
- default args
+ default values
  1 .weight = 1500
  2. height = 1500
 '''
@@ -72,7 +72,7 @@ def size_tiles(num_pixels, w,h):
     #actual_tile_size = math.ceil(num_pixels / num_tiles)
     return num_tiles, w, h
 
-def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage):
+def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name):
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i #1024 * 0 = 0
@@ -92,17 +92,22 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
                 if not os.path.exists(path+"/"+name_damage):
                     os.mkdir(path+"/"+name_damage)
                     print("folder created: ",name_damage)
-                    name = (path+"/"+name_damage + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+                    name = (path+"/"+name_damage + '/' + img_name  + str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
                 else:
-                    name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
+                    name = (path+"/"+name_damage + '/' +img_name +  str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
 
             else:
-                name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
-                cv2.imwrite(name, cropped_img)
+                if not os.path.exists(path + "/" + "no_damage"):
+                    os.mkdir(path + "/" + "no_damage")
+                    name = (path + '/'+"no_damage" +  '/'+img_name + str(i) + "_" + str(j) + ".jpg")
+                    cv2.imwrite(name, cropped_img)
+                else:
+                    name = (path + '/' + "no_damage" + '/' + img_name  + str(i) + "_" + str(j) + ".jpg")
+                    cv2.imwrite(name, cropped_img)
 
-def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage):
+def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name):
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i
@@ -173,22 +178,7 @@ if __name__ == "__main__":
     WEIGHT = 1500
     HEIGHT = 1500
     parser = argparse.ArgumentParser(description='Process dataset for image classification')
-    '''
-    parser.add_argument("weight",
-                        default=weight,
-                        metavar="-weight",
-                        type=int,
-                        help="'1500'")
 
-    parser.add_argument("height",
-                        default=height,
-                        metavar="-height",
-                        type=int,
-                        help="'1500'")
-    
-    '''
-    #parser.add_argument('--weight', help='1500', default=weight)
-    #parser.add_argument('--height', help='1500', default=height)
     parser.add_argument('--weight',required=False,
                         default=WEIGHT,
                         metavar="N",
@@ -204,7 +194,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    grabNamesImages()
+    grabNamesImages() # this is for create a imagelist.txt
 
     for dir in path:
         imgs_list = open(dir + '/image.txt', 'r').readlines()
@@ -242,6 +232,11 @@ if __name__ == "__main__":
             counterObject, xmin, xmax, ymin, ymax = {}, {}, {}, {}, {}
 
             for child_of_root in root:
+
+                if child_of_root.tag == 'filename':
+                    image_id = (child_of_root.text)
+
+
                 if child_of_root.tag == 'object':
                     for child_of_object in child_of_root:
                         if child_of_object.tag == 'name':
@@ -269,10 +264,10 @@ if __name__ == "__main__":
 
 
                     finding_annotations(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
-                                        ymin[category_id],ymax[category_id],name_damage)
+                                        ymin[category_id],ymax[category_id],name_damage, img_name)
 
-                    #cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                     #                   ymin[category_id], ymax[category_id], name_damage)
+                    cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                                        ymin[category_id], ymax[category_id], name_damage, img_name)
 
 
 
