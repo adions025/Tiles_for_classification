@@ -1,15 +1,19 @@
 '''
 damageTiles.py
 
+
+
 Written by Adonis Gonzalez
 ------------------------------------------------------------
 
-Usage:
-$ usage: damageTiles.py [--weight N] [--height N]
+usage:
+$ python damageTiles.py [-h] [--weight N] [--height N] [--threshold N]
 
  default values
  1  weight = 1500
  2. height = 1500
+ 3. threshold = 10
+
 '''
 
 
@@ -25,7 +29,6 @@ import argparse
 
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
-#ROOT_DIR = os.path.abspath("../")
 sys.path.append(ROOT_DIR)
 
 print(ROOT_DIR)
@@ -74,17 +77,49 @@ def size_tiles(num_pixels, w,h):
     #num_tiles = math.floor(num_pixels / num_tiles)
     return num_tiles, w, h
 
-def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name):
+def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold):
+    """Cut the images in diferents tails,
+       the size of each tile is given by agurment or paramenter - in this case offset[0],[1]
+       And, in the same iteration is checking on each tile if there is annotation (damage), is this is True
+       creates a folder(s) for each type of damage, but also checks the percentage of annotation inside of
+       each tile, with the threshold given or using default value = 10 is compared if the annotation in the
+       tile is lower than the value of threshold, in case to be True, proceeds to create a folder for
+       small damages, if it is greater creates a folder and saves the images with annotations in their
+       corresponding folder. In the last case if there is no damage or annotation in the tile, it is saved
+       in a folder no_damage.
+
+    path: in this path it will be save the image
+    img_shape: is the dimension of the image (H,W,D), i dont use depth
+    offset: is heigh and weigth given, [0][1] as tuple
+    img: array of the image
+    xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
+    name_damage: given in xml file
+    img_name: the name how it will be save it
+    threshold: a value given to separate small damage in other folders  10 per default
+    """
+
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
+
             start_y = offset[1] * i #1024 * 0 = 0
             stop_y = offset[1] * (i + 1) #1024 * (0+1) = 1024
             start_x = offset[0] * j #1024 * 0 = 0
             stop_x = offset[0] * (j + 1) # 1024 *(0+1)= 1024
             cropped_img = img[start_y:stop_y,start_x:stop_x ]
+            #------------------------------------------#
 
-            if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
-                print("here_adonis")
+            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
+            annotation_dim =  (tmp_w * tmp_h)
+            tile_dim = offset[0] * offset[1]
+
+            tile_percent = (float(annotation_dim) / float(tile_dim))
+            thresh = (tile_percent * 100)
+            #-------------------------------------------#
+
+            #if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
+            if (tmp_w >= 0) and (tmp_h >= 0) and thresh > threshold:
+
                 if not os.path.exists(path+"/"+name_damage):
                     os.mkdir(path+"/"+name_damage)
                     print("folder created: ",name_damage)
@@ -93,17 +128,42 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
                 else:
                     name = (path+"/"+name_damage + '/' +img_name +  str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
-            else:
-                if not os.path.exists(path + "/" + "no_damage"):
-                    os.mkdir(path + "/" + "no_damage")
-                    name = (path + '/'+"no_damage" +  '/'+img_name + str(i) + "_" + str(j) + ".jpg")
+
+            elif (tmp_w >= 0) and (tmp_h >= 0) and thresh < threshold:
+
+                if not os.path.exists(path+"/"+"small_damage"):
+                    os.mkdir(path+"/"+"small_damage")
+                    print("folder created: ","small_damage")
+                    name = (path+"/"+"small_damage" + '/' + img_name  + str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
                 else:
-                    name = (path + '/' + "no_damage" + '/' + img_name  + str(i) + "_" + str(j) + ".jpg")
+                    name = (path+"/"+"small_damage" + '/' +img_name +  str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
 
+            else:
 
-def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
+                if not os.path.exists(path + "/" + "no_damage"):
+                    os.mkdir(path + "/" + "no_damage")
+                    print("folder created: ","no_damage")
+                    name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+                    cv2.imwrite(name, cropped_img)
+                else:
+                    name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+                    cv2.imwrite(name, cropped_img)
+                print("hola")
+
+
+
+def debug_tiles(img_shape, offset, img ,xmin, xmax, ymin, ymax):
+    """This function allow debug each tile.
+
+    img_shape: is the dimension of the image (H,W,D), i dont use depth
+    offset: is heigh and weigth given, [0][1] as tuple
+    img: array of the image
+    xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
+    name_damage: given in xml file
+    img_name: the name how it will be save it
+    """
 
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
@@ -120,14 +180,12 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             fourth = (xmax, ymax)
 
             '''
-            
             1)              3)
             |---------------|
             |               |
             |               |    
             |---------------|
             2)              4)
-        
             '''
             #tiles points
             t_first = (start_x, start_y)
@@ -139,8 +197,9 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             annotation = img[ymin:ymax, xmin:xmax] #this is the annotation
             cropped_img = img[start_y:stop_y, start_x:stop_x]#it works - [each tile of the image]
             cropped_annotation_left = img[ymin:ymax, xmin:stop_x]#it works [if]
+            '''
+            
             cropped_annotation_right = img[ymin:ymax, start_x:xmax]#it works
-
             h_annotation_l = cropped_annotation_left.shape[0]
             w_annotation_l = cropped_annotation_left.shape[1]
             dim_annotation_l = (h_annotation_l * w_annotation_l)
@@ -150,7 +209,8 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             w_annotation_r = cropped_annotation_right.shape[1]
             dim_annotation_r = (h_annotation_r * w_annotation_r)
             percent_tile_r = ((dim_annotation_r * 100)/dim_tile)
-
+            
+            '''
             #------------------------------------------#
             tmp_w = min(stop_x, xmax) - max(start_x,xmin)
             tmp_h = min(stop_y, ymax) - max(start_y,ymin)
@@ -160,47 +220,33 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             second_mul = (stop_y - start_y)
 
             tmp_m = first_mul * second_mul
+            print("this is min(stop_x, xmax)", stop_x, xmax)
+            print("this is max(start_x, xmin)", start_x, xmin)
 
+            print("this is min(stop_y, ymax)", (stop_y, ymax))
+            print("this is max(start_y,ymin)", (start_y,ymin))
 
-
+            print(first_mul)
 
             print("---------------------------------------------------------------------------------")
             print("tile: ", [i],[j])
 
             if (tmp_w >= 0) and (tmp_h >= 0):
+
                 p = (float(tmp_w_h) / float(tmp_m))
+                th = p * 100
+
+                if (th > 10):
+                    print("es mayor que 10")
                 print("here")
-                print(p)
-                print(tmp_w)
-                print(tmp_h)
-                print("this is w* h", tmp_w_h)
+                print("Percentage of annotation in tile = ", p*100)
+                print("wigth of annotation in tile", tmp_w)
+                print("heigth of annotation in tile", tmp_h)
+                print("this is w * h", tmp_w_h)
                 print("this is tmp_m = first_mul * second_mul", tmp_m)
 
             print("shape of tile", cropped_img.shape)
             print("Ano in 1 tile_left", cropped_annotation_left.shape)
-            print("Ano in 1 tile_rigth", cropped_annotation_right.shape)
-
-            print("size of tile in this annotation: ", dim_annotation_l)
-            print("percentage of anno in 1 tile    :", percent_tile_l)
-            print("percentage of anno in 2 tile    :", percent_tile_r)
-
-            print("----here start ananotations points---")
-            print(first)
-            print(second)
-            print(third)
-            print(fourth)
-            print("---here start tiles points---")
-            print(t_first)
-            print(t_second)
-            print(t_third)
-            print(t_fourth)
-
-            #annotation = img[ymin:ymax, xmin:xmax]
-
-            #print(np.array(annotation,cropped_img))
-
-            #if (annotation.all() == cropped_img.all()):
-             #   print("son iguel")
 
             if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
                 print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
@@ -209,11 +255,19 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
 
 
 def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_name):
+    """save only the annotation, this is only if you want to check where is exactly
+       the annotation in you image, using xml coordinates.
+
+    path: in this path it will be save the image
+    img: array of the image
+    xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
+    name_damage: given in xml file
+    img_name: the name how it will be save it
+    """
     name = (path + '/'+ name_damage+"_"+img_name+ "adionis_.jpg")
     annotation = img[ymin:ymax, xmin:xmax]
     cv2.imwrite(name, annotation)
     print("saving image")
-
 
 
 
@@ -237,6 +291,7 @@ if __name__ == "__main__":
     #weight, height = argv
     WEIGHT = 1000
     HEIGHT = 1000
+    THRESHOLD = 10
 
     parser = argparse.ArgumentParser(description='Process dataset for image classification')
 
@@ -251,18 +306,15 @@ if __name__ == "__main__":
                         metavar="N",
                         type=int,
                         help='height 1500')
-    '''
+
     parser.add_argument('--threshold', required=False,
-                        default=HEIGHT,
+                        default=THRESHOLD,
                         metavar="N",
                         type=int,
-                        help='threshold < 10')
-    '''
-
-
+                        help='threshold < 10, percentage damage in tile lower than 10 will save'
+                             'in small_damage')
 
     args = parser.parse_args()
-
     grabNamesImages() # this is for create a imagelist.txt
 
     for dir in path:
@@ -324,11 +376,11 @@ if __name__ == "__main__":
                                     print("this is de ymax: ", ymax[category_id])
 
 
-                    debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
-                                        ymin[category_id],ymax[category_id])
+                    #debug_tiles(img_shape, offset, img,xmin[category_id],xmax[category_id],
+                     #                   ymin[category_id],ymax[category_id])
 
                     cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                         ymin[category_id], ymax[category_id], name_damage, img_name)
+                                         ymin[category_id], ymax[category_id], name_damage, img_name,THRESHOLD)
 
                     #saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
                      #                   ymin[category_id],ymax[category_id],name_damage, namexml)
