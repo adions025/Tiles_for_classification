@@ -8,7 +8,7 @@ Usage:
 $ usage: damageTiles.py [--weight N] [--height N]
 
  default values
- 1 .weight = 1500
+ 1  weight = 1500
  2. height = 1500
 '''
 
@@ -21,8 +21,7 @@ import os
 import os.path as path
 import sys
 import xml.etree.cElementTree as ET
-from sys import argv
-
+import argparse
 
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -31,21 +30,19 @@ sys.path.append(ROOT_DIR)
 
 print(ROOT_DIR)
 path = []
-prueba1 = os.path.join(ROOT_DIR, "prueba1")
-prueba2 = os.path.join(ROOT_DIR, "prueba2")
+#folder1 = os.path.join(ROOT_DIR, "prueba1")
+folder2 = os.path.join(ROOT_DIR, "prueba2")
 
-path = [prueba1, prueba2]
+path = [folder2]
 
-count = 0
 def load_image(filename):
     try:
-        original = Image.open(filename)
-        print("the size of the image is :")
-        print(original.format,original.size)
-        w, h = original.size
-        size = w * h
         img = cv2.imread(filename)
-        print(img.shape)
+        print("(H, W, D) = (height, width, depth)")
+        print("shape: ",img.shape)
+        h, w, d = img.shape
+        size = h * w
+        #print(img.shape)
     except Exception as e:
         print(e)
         print ("Unable to load image")
@@ -64,12 +61,17 @@ def grabNamesImages():
                         f.write("%s\n" % item)
             f.close()
         print("List of images, images.tx, was save in", file)
+        print("---------------------------------------------------------------------------------")
+        print("--INFO IMAGE                                                                   --")
+        print("---------------------------------------------------------------------------------")
+
 
 
 def size_tiles(num_pixels, w,h):
-    num_tiles = int(round(num_pixels / (w * h)))
+    num_tiles = int(round(math.floor(num_pixels / (w * h))))
     num_tiles = max(1, num_tiles)
     #actual_tile_size = math.ceil(num_pixels / num_tiles)
+    #num_tiles = math.floor(num_pixels / num_tiles)
     return num_tiles, w, h
 
 def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name):
@@ -78,14 +80,8 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
             start_y = offset[1] * i #1024 * 0 = 0
             stop_y = offset[1] * (i + 1) #1024 * (0+1) = 1024
             start_x = offset[0] * j #1024 * 0 = 0
-            stop_x = offset[0] * (j + 1) # 1024 *(1) 1024
+            stop_x = offset[0] * (j + 1) # 1024 *(0+1)= 1024
             cropped_img = img[start_y:stop_y,start_x:stop_x ]
-
-            '''
-            if os.path.isfile(name):
-                print("exist this files")
-                name = (path + '/' + "name" + str(i) + "_" + str(j) + ".png")
-            '''
 
             if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
                 print("here_adonis")
@@ -97,7 +93,6 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
                 else:
                     name = (path+"/"+name_damage + '/' +img_name +  str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
-
             else:
                 if not os.path.exists(path + "/" + "no_damage"):
                     os.mkdir(path + "/" + "no_damage")
@@ -107,16 +102,15 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
                     name = (path + '/' + "no_damage" + '/' + img_name  + str(i) + "_" + str(j) + ".jpg")
                     cv2.imwrite(name, cropped_img)
 
-def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name):
+
+def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
+
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
             start_y = offset[1] * i
             stop_y = offset[1] * (i + 1)
             start_x = offset[0] * j
             stop_x = offset[0] * (j + 1)
-
-            cropped_img = img[start_y:stop_y, start_x:stop_x]
-            name = (path + '/' + "tail" + str(i) + "_" + str(j) + ".png")
 
             first = (xmin, ymin)
             second= (xmin, ymax)
@@ -128,8 +122,26 @@ def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, nam
             t_third = (stop_x, start_y)
             t_fourth = (stop_x, stop_y)
 
+            cropped_img = img[start_y:stop_y, start_x:stop_x]
+            cropped_annotation = img[ymin:ymax, xmin:stop_x]
+            cropeed_annotation_left = img[xmax:start_x, start_x:xmax]
+
+            h_annotation = cropped_annotation.shape[0]
+            w_annotation = cropped_annotation.shape[1]
+            dim_annotation = (h_annotation * w_annotation)
+            dim_tile = offset[0] * offset[1]
+            percent_tile = ((dim_annotation * 100)/dim_tile)
+
+
+
+
             print("---------------------------------------------------------------------------------")
             print("tile: ", [i],[j])
+            print("shape of tile", cropped_img.shape)
+            print("Ano in 1 tile", cropped_annotation.shape)
+
+            print("size of tile in this annotation: ", dim_annotation)
+            print("percentage of anno in 1 tile    :", percent_tile)
             print("----here start ananotations points---")
             print(first)
             print(second)
@@ -141,21 +153,27 @@ def finding_annotations(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, nam
             print(t_third)
             print(t_fourth)
 
+            annotation = img[ymin:ymax, xmin:xmax]
+
+            #print(np.array(annotation,cropped_img))
+
+            if (annotation.all() == cropped_img.all()):
+                print("son iguel")
+
             if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
-                print("here_adonis")
-            '''
-            if(start_x < xmax) and (stop_x>xmin) and (start_y < ymax) and (stop_y > ymin):
-                print("here_adonis")
-
-                if not os.path.exists(path+"/"+name_damage):
-                    os.mkdir(path+"/"+name_damage)
-                    cv2.imwrite(name, cropped_img)
-
-            if not os.path.exists(path+"/"+"no_damage"):
-                os.mkdir(path+"/"+"no_damage")
-                cv2.imwrite(name, cropped_img)
-            '''
+                print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
             print("---------------------------------------------------------------------------------")
+
+
+
+def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_name):
+    name = (path + '/'+ name_damage+"_"+img_name+ "adionis_.jpg")
+    annotation = img[ymin:ymax, xmin:xmax]
+    cv2.imwrite(name, annotation)
+    print("saving image")
+
+
+
 
 def saving_images():
     print("saving-----")
@@ -173,10 +191,11 @@ def saving_images():
 if __name__ == "__main__":
 
 
-    import argparse
+
     #weight, height = argv
     WEIGHT = 1500
     HEIGHT = 1500
+
     parser = argparse.ArgumentParser(description='Process dataset for image classification')
 
     parser.add_argument('--weight',required=False,
@@ -190,6 +209,14 @@ if __name__ == "__main__":
                         metavar="N",
                         type=int,
                         help='height 1500')
+    '''
+    parser.add_argument('--threshold', required=False,
+                        default=HEIGHT,
+                        metavar="N",
+                        type=int,
+                        help='threshold < 10')
+    '''
+
 
 
     args = parser.parse_args()
@@ -203,23 +230,16 @@ if __name__ == "__main__":
             img_name = img.strip().split('/')[-1]
             filename = (dir +'/'+img_name)
             size, img_shape, img = load_image(filename)
-            print("size : ",size)
-            print("img_shape : ", img_shape)
+            print("number of pixels: ",size)
             #print("img : ", img) #this is a full matrix of image
 
             num_tiles, w, h =  size_tiles(size, args.weight, args.height)
 
             print("number of tile :",num_tiles)
-            print("this is w :",w)
-            print("this is h :", h)
+            print("this is widgth tile :", w)
+            print("this is heigth tile :", h)
             offset = (w, h)
 
-            '''
-            if not os.path.exists('prueba1/tails'):
-                os.makedirs('prueba1/tails')
-            '''
-
-            #cutting_images(dir, img_shape, offset, img)
             print('this is this image', filename)
 
             namexml = (img_name.split('.jpg')[0])
@@ -233,15 +253,14 @@ if __name__ == "__main__":
 
             for child_of_root in root:
 
-                if child_of_root.tag == 'filename':
-                    image_id = (child_of_root.text)
-
-
                 if child_of_root.tag == 'object':
                     for child_of_object in child_of_root:
                         if child_of_object.tag == 'name':
                             category_id = child_of_object.text
                             name_damage=(category_id.split(' ')[0]) #just for use SD intead SD1 levels
+                            print("------------------")
+                            print("INFO-ANNOTATION")
+                            print("------------------")
                             print("this is the damage: ", category_id)
 
                         if child_of_object.tag == 'bndbox':
@@ -263,15 +282,14 @@ if __name__ == "__main__":
                                     print("this is de ymax: ", ymax[category_id])
 
 
-                    finding_annotations(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
-                                        ymin[category_id],ymax[category_id],name_damage, img_name)
+                    #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
+                                      #  ymin[category_id],ymax[category_id])
 
-                    cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                        ymin[category_id], ymax[category_id], name_damage, img_name)
+                    #cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                     #                   ymin[category_id], ymax[category_id], name_damage, img_name)
 
-
-
-
+                    saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
+                                        ymin[category_id],ymax[category_id],name_damage, namexml)
 
 
 
