@@ -112,25 +112,43 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             start_x = offset[0] * j
             stop_x = offset[0] * (j + 1)
 
+            #annotation points
             first = (xmin, ymin)
             second= (xmin, ymax)
             third = (xmax, ymin)
             fourth = (xmax, ymax)
 
+            '''
+            
+            1)              3)
+            |---------------|
+            |               |
+            |               |    
+            |---------------|
+            2)              4)
+        
+            '''
+            #tiles points
             t_first = (start_x, start_y)
             t_second = (start_x, stop_y)
             t_third = (stop_x, start_y)
             t_fourth = (stop_x, stop_y)
 
-            cropped_img = img[start_y:stop_y, start_x:stop_x]
-            cropped_annotation = img[ymin:ymax, xmin:stop_x]
-            cropeed_annotation_left = img[xmax:start_x, start_x:xmax]
-
-            h_annotation = cropped_annotation.shape[0]
-            w_annotation = cropped_annotation.shape[1]
-            dim_annotation = (h_annotation * w_annotation)
             dim_tile = offset[0] * offset[1]
-            percent_tile = ((dim_annotation * 100)/dim_tile)
+
+            cropped_img = img[start_y:stop_y, start_x:stop_x]#it works - dim of 1 tile
+            cropped_annotation_left = img[ymin:ymax, xmin:stop_x]#it works
+            cropped_annotation_right = img[ymin:ymax, start_x:xmax]
+
+            h_annotation_l = cropped_annotation_left.shape[0]
+            w_annotation_l = cropped_annotation_left.shape[1]
+            dim_annotation_l = (h_annotation_l * w_annotation_l)
+            percent_tile_l = ((dim_annotation_l * 100)/dim_tile)
+
+            h_annotation_r = cropped_annotation_right.shape[0]
+            w_annotation_r = cropped_annotation_right.shape[1]
+            dim_annotation_r = (h_annotation_r * w_annotation_r)
+            percent_tile_r = ((dim_annotation_r * 100)/dim_tile)
 
 
 
@@ -138,10 +156,13 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             print("---------------------------------------------------------------------------------")
             print("tile: ", [i],[j])
             print("shape of tile", cropped_img.shape)
-            print("Ano in 1 tile", cropped_annotation.shape)
+            print("Ano in 1 tile_left", cropped_annotation_left.shape)
+            print("Ano in 1 tile_rigth", cropped_annotation_right.shape)
 
-            print("size of tile in this annotation: ", dim_annotation)
-            print("percentage of anno in 1 tile    :", percent_tile)
+            print("size of tile in this annotation: ", dim_annotation_l)
+            print("percentage of anno in 1 tile    :", percent_tile_l)
+            print("percentage of anno in 2 tile    :", percent_tile_r)
+
             print("----here start ananotations points---")
             print(first)
             print(second)
@@ -153,12 +174,12 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax):
             print(t_third)
             print(t_fourth)
 
-            annotation = img[ymin:ymax, xmin:xmax]
+            #annotation = img[ymin:ymax, xmin:xmax]
 
             #print(np.array(annotation,cropped_img))
 
-            if (annotation.all() == cropped_img.all()):
-                print("son iguel")
+            #if (annotation.all() == cropped_img.all()):
+             #   print("son iguel")
 
             if (start_x < xmax) and (stop_x > xmin) and (start_y < ymax) and (stop_y > ymin):
                 print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
@@ -193,8 +214,8 @@ if __name__ == "__main__":
 
 
     #weight, height = argv
-    WEIGHT = 1500
-    HEIGHT = 1500
+    WEIGHT = 2000
+    HEIGHT = 2000
 
     parser = argparse.ArgumentParser(description='Process dataset for image classification')
 
@@ -282,14 +303,14 @@ if __name__ == "__main__":
                                     print("this is de ymax: ", ymax[category_id])
 
 
-                    #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
-                                      #  ymin[category_id],ymax[category_id])
+                    debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
+                                        ymin[category_id],ymax[category_id])
 
                     #cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
                      #                   ymin[category_id], ymax[category_id], name_damage, img_name)
 
-                    saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
-                                        ymin[category_id],ymax[category_id],name_damage, namexml)
+                    #saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
+                      #                  ymin[category_id],ymax[category_id],name_damage, namexml)
 
 
 
