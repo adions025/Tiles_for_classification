@@ -6,20 +6,20 @@ Python 3.6
 ## Installation
 1. Clone this repository
 
-``
+```
 $ git clone http://141.252.12.43/adions025/damagedetection.git
-``
+```
 
 ##Usage
 usage:
 
-``
+```
 $ python damageTiles.py [-h] [--weight N] [--height N] [--threshold N]
-``
+```
 
- default values
+ - default values:
  
- 1  weight = 1500
+ 1. weight = 1500
  2. height = 1500
  3. threshold = 10
 
