@@ -34,48 +34,41 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
-folder2 = os.path.join(ROOT_DIR, "prueba2")
+folder2 = os.path.join(ROOT_DIR, "full")
 
 path = [folder2]
 
 def load_image(filename):
+    """Loads an image, reads it and returns image size,
+        dimension and a numpy array of this image.
+
+    filename: the name of the image
+    """
     try:
         img = cv2.imread(filename)
         print("(H, W, D) = (height, width, depth)")
         print("shape: ",img.shape)
         h, w, d = img.shape
-        size = h * w
-        #print(img.shape)
+        #size = h * w
     except Exception as e:
         print(e)
         print ("Unable to load image")
 
-    return size, img.shape, img
+    return img.shape, img
 
 
-def grabNamesImages():
-    for file in path:
-        files = os.listdir(file)
-        for name in files:
-            #imgs = []
-            with open(file + '/image.txt', 'w') as f:
-                for item in files:
-                    if (item.endswith('.jpg')):
-                        f.write("%s\n" % item)
-            f.close()
-        print("List of images, images.tx, was save in", file)
-        print("---------------------------------------------------------------------------------")
-        print("--INFO IMAGE                                                                   --")
-        print("---------------------------------------------------------------------------------")
+def size_tiles(img_shape, offset):
+    """Calculates the total number of tiles in an image, rounding down, which
+       means that incomplete tiles will not be taken into the calculation.
 
+    img_shape: is the dimension of the image (H,W,D), i dont use depth.
+    offset: is heigh and weigth given, [0][1] as tuple.
+    """
+    num_tiles_w = (int(math.floor(img_shape[0] / (offset[1] * 1.0))))
+    num_tiles_h = (int(math.floor(img_shape[1] / (offset[0] * 1.0))))
+    num_tiles = num_tiles_h * num_tiles_w
+    return num_tiles
 
-
-def size_tiles(num_pixels, w,h):
-    num_tiles = int(round(math.floor(num_pixels / (w * h))))
-    num_tiles = max(1, num_tiles)
-    #actual_tile_size = math.ceil(num_pixels / num_tiles)
-    #num_tiles = math.floor(num_pixels / num_tiles)
-    return num_tiles, w, h
 
 def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold):
     """Cut the images in diferents tails,
@@ -88,14 +81,14 @@ def cutting_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dam
        corresponding folder. In the last case if there is no damage or annotation in the tile, it is saved
        in a folder no_damage.
 
-    path: in this path it will be save the image
-    img_shape: is the dimension of the image (H,W,D), i dont use depth
-    offset: is heigh and weigth given, [0][1] as tuple
-    img: array of the image
-    xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
-    name_damage: given in xml file
-    img_name: the name how it will be save it
-    threshold: a value given to separate small damage in other folders  10 per default
+    path: in this path it will be save the image.
+    img_shape: is the dimension of the image (H,W,D), i dont use depth.
+    offset: is heigh and weigth given, [0][1] as tuple.
+    img: array of the image.
+    xmin, xmax, ymin, ymax : coordinates in xml file (annotations).
+    name_damage: given in xml file.
+    img_name: the name how it will be save it.
+    threshold: a value given to separate small damage in other folders  10 per default.
     """
 
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
@@ -270,6 +263,25 @@ def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_na
     print("saving image")
 
 
+def grabNamesImages():
+    """"makes a list of the files in each of the paths given, paths [ ]is a list of
+        directories, reads these and searches for images with jpg extension, also saves
+        this list in a file images.txt in each of those paths.
+    """
+    for file in path:
+        files = os.listdir(file)
+        for name in files:
+            #imgs = []
+            with open(file + '/image.txt', 'w') as f:
+                for item in files:
+                    if (item.endswith('.jpg')):
+                        f.write("%s\n" % item)
+            f.close()
+        print("List of images, images.tx, was save in", file)
+        print("---------------------------------------------------------------------------------")
+        print("--INFO IMAGE                                                                   --")
+        print("---------------------------------------------------------------------------------")
+
 
 def saving_images():
     print("saving-----")
@@ -287,11 +299,9 @@ def saving_images():
 if __name__ == "__main__":
 
 
-
-    #weight, height = argv
     WEIGHT = 1000
     HEIGHT = 1000
-    THRESHOLD = 10
+    THRESHOLD = 1
 
     parser = argparse.ArgumentParser(description='Process dataset for image classification')
 
@@ -323,16 +333,16 @@ if __name__ == "__main__":
         for img in imgs_list:
             img_name = img.strip().split('/')[-1]
             filename = (dir +'/'+img_name)
-            size, img_shape, img = load_image(filename)
-            print("number of pixels: ",size)
+            img_shape, img = load_image(filename)
             #print("img : ", img) #this is a full matrix of image
-
-            num_tiles, w, h =  size_tiles(size, args.weight, args.height)
+            print(type(img))
+            offset = (args.weight, args.height)
+            num_tiles =  size_tiles(img_shape, offset)
 
             print("number of tile :",num_tiles)
-            print("this is widgth tile :", w)
-            print("this is heigth tile :", h)
-            offset = (w, h)
+            print("this is widgth tile :", args.weight)
+            print("this is heigth tile :", args.height)
+
 
             print('this is this image', filename)
 
@@ -376,8 +386,8 @@ if __name__ == "__main__":
                                     print("this is de ymax: ", ymax[category_id])
 
 
-                    #debug_tiles(img_shape, offset, img,xmin[category_id],xmax[category_id],
-                     #                   ymin[category_id],ymax[category_id])
+                    debug_tiles(img_shape, offset, img,xmin[category_id],xmax[category_id],
+                                        ymin[category_id],ymax[category_id])
 
                     cutting_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
                                          ymin[category_id], ymax[category_id], name_damage, img_name,THRESHOLD)
