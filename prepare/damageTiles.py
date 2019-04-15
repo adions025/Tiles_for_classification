@@ -38,7 +38,7 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
-folder2 = os.path.join(ROOT_DIR, "prueba2")
+folder2 = os.path.join(ROOT_DIR, "full")
 
 path = [folder2]
 
@@ -95,8 +95,6 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
     threshold: a value given to separate small damage in other folders  10 per default.
     """
 
-
-    #n_annotation = 0
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
 
@@ -179,7 +177,7 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                     else:
                         cv2.imwrite(small_damage, cropped_img)
 
-            #no damage
+            #no annotation, no damage
             if not (tmp_w >= 0) and not (tmp_h >= 0):
                 if not os.path.exists(path + "/" + "no_damage"):
                     os.mkdir(path + "/" + "no_damage")
@@ -247,132 +245,16 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
             tmp_m = first_mul * second_mul
             # ------------------------------------------#
             cropped_img = img[start_y:stop_y, start_x:stop_x]
+
             print("---------------------------------------------------------------------------------")
             print("tile: ", [i],[j])
             print(len(total_annotation))
             p = (float(tmp_w_h) / float(tmp_m))
             th = p * 100
-
-
-            if (len(total_annotation) > 1):
-
-
-
-                if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
-
-
-                    if (th > 1): #porcentaje para pequeo
-
-                        if (i, j) in dic_damages: #si hay mas de un dao
-
-                            if dic_damages[(i, j)] == name_damage:# 2 damages == same type
-                                print("here")
-                                if not os.path.exists(path + "/" + name_damage):
-                                    os.mkdir(path + "/" + name_damage)
-                                    print("folder created: ", name_damage)
-                                    name = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                                    cv2.imwrite(name, cropped_img)
-                                else:
-                                    name = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                                    cv2.imwrite(name, cropped_img)
-
-                            if dic_damages[(i,j)] != name_damage:# 2 damages != different type
-                                print(dic_damages[(i,j)], name_damage)
-                                print("different damage")
-                                print(dic_damages[(i, j)], name_damage)
-                                if not os.path.exists(path + "/" + "mutiple_damage"):
-                                    os.mkdir(path + "/" + "mutiple_damage")
-                                    print("folder created: ", "mutiple_damage")
-                                    name = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                                    cv2.imwrite(name, cropped_img)
-                                else:
-                                    name = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                                    cv2.imwrite(name, cropped_img)
-
-                        if(len(total_annotation) > 1) and not (i, j) in dic_damages:
-                            print("aka")
-
-                            dic_damages[(i, j)] = name_damage
-                            print(dic_damages[(i, j)])
-
-                    #small damage
-                    if (tmp_w >= 0) and (tmp_h >= 0) and th < 1:
-                        if not os.path.exists(path + "/" + "small_damage"):
-                            os.mkdir(path + "/" + "small_damage")
-                            print("folder created: ", "small_damage")
-                            name = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-                        else:
-                            name = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-
-
-
-
-            if (len(total_annotation) == 1):
-
-                if (th > 1):
-
-                    if (tmp_w >= 0) and (tmp_h >= 0):
-                        if not os.path.exists(path + "/" + name_damage):
-                            os.mkdir(path + "/" + name_damage)
-                            print("folder created: ", name_damage)
-                            name = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-                        else:
-                            name = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-
-                    if not(tmp_w >= 0) and not(tmp_h >= 0):
-                        if not os.path.exists(path + "/" + "no_damage"):
-                            os.mkdir(path + "/" + "no_damage")
-                            print("folder created: ", "no_damage")
-                            name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-                        else:
-                            name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                            cv2.imwrite(name, cropped_img)
-                else:
-
-                    if not os.path.exists(path + "/" + "small_damage"):
-                        os.mkdir(path + "/" + "small_damage")
-                        print("folder created: ", "small_damage")
-                        name = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                        cv2.imwrite(name, cropped_img)
-                    else:
-                        name = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                        cv2.imwrite(name, cropped_img)
-
-
-            if not (tmp_w >= 0) and not (tmp_h >= 0):
-                if not os.path.exists(path + "/" + "no_damage"):
-                    os.mkdir(path + "/" + "no_damage")
-                    print("folder created: ", "no_damage")
-                    name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                    cv2.imwrite(name, cropped_img)
-                else:
-                    name = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-                    cv2.imwrite(name, cropped_img)
-
+            if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
                     print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
+
             print("---------------------------------------------------------------------------------")
-
-
-
-
-    print(dic_damages)
-
-
-    #print("In total tile with damage", count)
-
-def saving_multiple_damage():
-    print("this is multiple damage")
-
-
-
-
-
-
 
 
 
@@ -392,7 +274,7 @@ def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_na
     print("saving image")
 
 
-def grabNamesImages(path):
+def grab_images(path):
     """"makes a list of the files in each of the paths given, paths [ ]is a list of
         directories, reads these and searches for images with jpg extension, also saves
         this list in a file images.txt in each of those paths.
@@ -412,20 +294,6 @@ def grabNamesImages(path):
         print("---------------------------------------------------------------------------------")
 
 
-def saving_images():
-    print("saving-----")
-    for dir in path:
-        imgs_list = open(dir + '/image.txt', 'r').readlines()
-        total = len(imgs_list)
-        print(total)
-
-        for img in imgs_list:
-            if 'jpg' in img:
-                #cutting_images(img_shape, offset, img)
-                print("nice")
-def counting_annotations():
-    print("dnt do tat")
-
 if __name__ == "__main__":
 
 
@@ -433,8 +301,7 @@ if __name__ == "__main__":
     HEIGHT = 1500
     THRESHOLD = 1
 
-    parser = argparse.ArgumentParser(description='Process dataset for image classification')
-
+    parser = argparse.ArgumentParser(description='_Process dataset_')
     parser.add_argument('--weight',required=False,
                         default=WEIGHT,
                         metavar="N",
@@ -455,39 +322,36 @@ if __name__ == "__main__":
                              'in small_damage')
 
     args = parser.parse_args()
-    grabNamesImages(path) # this is for create a imagelist.txt
+    grab_images(path)
 
     for dir in path:
         imgs_list = open(dir + '/image.txt', 'r').readlines()
 
         for img in imgs_list:
-            dic_damages = {}
+            dic_damages = {}#saving (i,j):name_damage //to check is there is two damage
             dic_damages2 = {}
             dic_damages3 ={}
             img_name = img.strip().split('/')[-1]
             filename = (dir +'/'+img_name)
             img_shape, img = load_image(filename)
-            #print("img : ", img) #this is a full matrix of image
-            print(type(img))
             offset = (args.weight, args.height)
             num_tiles =  size_tiles(img_shape, offset)
 
             print("number of tile :",num_tiles)
             print("this is widgth tile :", args.weight)
             print("this is heigth tile :", args.height)
-
-
             print('this is this image', filename)
 
             only_img = (img_name.split('.jpg')[0])
             xml_n = only_img + '.xml'
 
-            print("this is xml_n: ", xml_n)
 
             tree = ET.ElementTree(file=dir + '/' + xml_n)
             root = tree.getroot()
             xmin, xmax, ymin, ymax = {}, {}, {}, {}
             total_annotation = []
+
+            #check the number of annotation for each image
             for child_of_root in root:
                 if child_of_root.tag == 'object':
                     for child_of_object in child_of_root:
@@ -495,9 +359,7 @@ if __name__ == "__main__":
                             name = child_of_object.text
                             total_annotation.append(name)
 
-            print(len(total_annotation))
-
-
+            #start iterate for each annotation
             for child_of_root in root:
                 if child_of_root.tag == 'object':
                     for child_of_object in child_of_root:
@@ -508,8 +370,6 @@ if __name__ == "__main__":
                             print("INFO-ANNOTATION")
                             print("------------------")
                             print("this is the damage: ", name_damage)
-
-
                         if child_of_object.tag == 'bndbox':
                             for child_of_root in child_of_object:
                                 if child_of_root.tag == 'xmin':
@@ -528,6 +388,10 @@ if __name__ == "__main__":
                                     ymax[category_id] = int(child_of_root.text)
                                     print("this is de ymax: ", ymax[category_id])
 
+                    tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
+
+
                     #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
                      #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation,dic_damages2, dic_damages3)
 
@@ -537,8 +401,6 @@ if __name__ == "__main__":
                      #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation)
 
 
-                    tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                         ymin[category_id], ymax[category_id], name_damage, only_img,THRESHOLD,dic_damages)
 
                     #saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
                      #                   ymin[category_id],ymax[category_id],name_damage, only_img)
