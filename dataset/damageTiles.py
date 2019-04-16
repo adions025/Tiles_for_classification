@@ -38,7 +38,7 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
-folder2 = os.path.join(ROOT_DIR, "full")
+folder2 = os.path.join(ROOT_DIR, "all")
 
 path = [folder2]
 
@@ -297,8 +297,8 @@ def grab_images(path):
 if __name__ == "__main__":
 
 
-    WEIGHT = 1500
-    HEIGHT = 1500
+    WEIGHT = 1000
+    HEIGHT = 1000
     THRESHOLD = 1
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
