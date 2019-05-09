@@ -1,3 +1,12 @@
+"""
+
+Predictions for tiles
+
+
+Written by Adonis Gonzalez
+------------------------------------------------------------
+
+"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -85,128 +94,126 @@ def load_labels(label_file):
   return label
 
 
-def grabNamesImages():
-  files = os.listdir(folder2)
+def grabNamesImages(path):
+  files = os.listdir(path)
   print(files)
-  with open(folder2 + "/" + 'image.txt', 'w') as f:
+  with open(path + "/" + 'image.txt', 'w') as f:
     for item in files:
       if (item.endswith('.jpg')):
         f.write("%s\n" % item)
   f.close()
-  #print("List of images, images.tx, was save in", file)
+  print("List of images, images.tx, was save in", path)
 
 
 if __name__ == "__main__":
 
   ROOT_DIR = os.path.abspath("../")
   sys.path.append(ROOT_DIR)
-  print(ROOT_DIR)
 
-  #file_name = os.path.join(ROOT_DIR, "dataset/test/DSC_95992_3.jpg")
   folder2 = os.path.join(ROOT_DIR, "dataset/test")
   results_dir = os.path.join(ROOT_DIR, "dataset/results")
-  #print(folder2)
-  model_file = os.path.join(ROOT_DIR, "src/tf_files2/retrained_graph.pb")
-  #print(folder3)
+  model_file = os.path.join(ROOT_DIR, "src/tf_files/retrained_graph.pb")
 
-
-
-  #file_name = "tf_files/flower_photos/daisy/3475870145_685a19116d.jpg"
-  #model_file = "tf_files/retrained_graph.pb"
   label_file = "tf_files/retrained_labels.txt"
-  #input_height = 224
-  #input_width = 224
   input_height = 299
   input_width = 299
   input_mean = 128
   input_std = 128
-  #input_layer = "input"
   input_layer = "Mul"
   output_layer = "final_result"
 
-  grabNamesImages()
+  font = os.path.join(ROOT_DIR, "font/FiraMono-Medium.otf")
+  print(font)
+  font = ImageFont.truetype(font, 25)
 
-  imgs_list = open(folder2 + '/image.txt', 'r').readlines()
+  subdirs = []
+  for subdir in os.listdir(folder2):
+    subdirs.append(subdir)
 
-  #mg_name = img.strip().split('/')[-1]
-  #filename = (dir + '/' + img_name)
+  for subdir in subdirs:
+    subdir_fullpath = os.path.join(folder2, subdir)
+    print("here")
+    print(subdir_fullpath)
 
-  with open(folder2 + "/" + "results555.csv", 'a') as f:
-    for image_name in imgs_list:
+    create_dir = os.path.join(results_dir, subdir)
 
-      img_name = image_name.strip().split('/')[-1]
-      file_path = (folder2+"/"+img_name)
-      only_img = (img_name.split('.jpg')[0])
+    if not os.path.exists(create_dir):
+      os.makedirs(create_dir)
 
-      img = Image.open(file_path)
-      draw = ImageDraw.Draw(img)
+    grabNamesImages(subdir_fullpath)
+    imgs_list = open(subdir_fullpath + '/image.txt', 'r').readlines()
 
+    with open(subdir_fullpath + "/" + "results.csv", 'a') as f:
+      for image_name in imgs_list:
 
-      font = os.path.join(ROOT_DIR, "font/FiraMono-Medium.otf")
-      print(font)
-      font = ImageFont.truetype(font, 25)
+        img_name = image_name.strip().split('/')[-1]
+        file_path = (subdir_fullpath+"/"+img_name)
+        only_img = (img_name.split('.jpg')[0])
 
-      graph = load_graph(model_file)
-      t = read_tensor_from_image_file(file_path,
-                                  input_height=input_height,
-                                  input_width=input_width,
-                                  input_mean=input_mean,
-                                  input_std=input_std
-                                )
+        img = Image.open(file_path)
+        draw = ImageDraw.Draw(img)
 
-      input_name = "import/" + input_layer
-      output_name = "import/" + output_layer
-      input_operation = graph.get_operation_by_name(input_name);
-      output_operation = graph.get_operation_by_name(output_name);
+        graph = load_graph(model_file)
+        t = read_tensor_from_image_file(file_path,
+                                    input_height=input_height,
+                                    input_width=input_width,
+                                    input_mean=input_mean,
+                                    input_std=input_std
+                                  )
 
-      best_result = {}
+        input_name = "import/" + input_layer
+        output_name = "import/" + output_layer
+        input_operation = graph.get_operation_by_name(input_name);
+        output_operation = graph.get_operation_by_name(output_name);
 
-      with tf.Session(graph=graph) as sess:
-        start = time.time()
-        results = sess.run(output_operation.outputs[0],
-                          {input_operation.outputs[0]: t})
-        end=time.time()
-        results = np.squeeze(results)
+        best_result = {}
 
-        top_k = results.argsort()[-5:][::-1]
-        labels = load_labels(label_file)
+        with tf.Session(graph=graph) as sess:
+          start = time.time()
+          results = sess.run(output_operation.outputs[0],
+                            {input_operation.outputs[0]: t})
+          end=time.time()
+          results = np.squeeze(results)
 
-
-        print('\nEvaluation time (1-image): {:.3f}s\n'.format(end-start))
-        template = "{} (score={:0.5f})"
-        for i in top_k:
-          print(template.format(labels[i], results[i]))
-          best_result.update({labels[i]:results[i]})
-
-
-        print("This", max(best_result.values(), key=float))
-
-        best = max((best_result.values()))
-
-        for x, j in best_result.items():
-          if j == best:
-            labeling = x
-            print(labeling)
+          top_k = results.argsort()[-5:][::-1]
+          labels = load_labels(label_file)
 
 
-        print(best_result)
-        last = str(labeling + " : " + str(best))
-
-        print("this is best ", best)
-        print("thi is all ", last)
-
-        draw.text((0, 0), last, (255, 255, 255), font=font)
-
-        img.save(results_dir+"/"+img_name)
-
-        results_in_file = str(only_img +' - '+ last)
-
-      f.write(results_in_file+'\n')
-
-        #csv = csv.writer(f)
-        #csv.writerow(results_in_file)
-
-        #f.write('%s\n' %(results_in_file))
+          print('\nEvaluation time (1-image): {:.3f}s\n'.format(end-start))
+          template = "{} (score={:0.5f})"
+          for i in top_k:
+            print(template.format(labels[i], results[i]))
+            best_result.update({labels[i]:results[i]})
 
 
-  #f.close()
+          print("This", max(best_result.values(), key=float))
+
+          best = max((best_result.values()))
+
+          for x, j in best_result.items():
+            if j == best:
+              labeling = x
+              print(labeling)
+
+
+          print(best_result)
+          last = str(labeling + " : " + str(best))
+
+          print("this is best ", best)
+          print("thi is all ", last)
+
+          draw.text((0, 0), last, (255, 255, 255), font=font)
+
+          img.save(create_dir+"/"+img_name)
+
+          results_in_file = str(only_img +' - '+ last)
+
+        f.write(results_in_file+'\n')
+
+          #csv = csv.writer(f)
+          #csv.writerow(results_in_file)
+
+          #f.write('%s\n' %(results_in_file))
+
+
+    #f.close()
