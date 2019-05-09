@@ -28,7 +28,18 @@ def list_dirs(path):
         subdirs.append(subdir)
     return subdirs
 
+def save_histogram_mAP(dict_precision):
+    labels, total = [], []
+    for key, item in dict_precision.items():
+        labels.append(key)
+        total.append(item)
 
+    x = np.arange(len(labels))
+    plt.bar(x, height=total)
+    plt.xticks(x + .5, labels)
+    # plt.show()
+    plt.savefig(tiles_folder + '/' + 'mAP1.png')
+    print("---saving----")
 
 
 if __name__ == "__main__":
@@ -40,8 +51,6 @@ if __name__ == "__main__":
     for subdir in subdirs:
         subdir_fullpath = os.path.join(tiles_folder, subdir)
         imgs_list = read_csv_file(subdir_fullpath)
-
-        print(len(imgs_list))
 
         tp = 0
         fp = 0
@@ -96,24 +105,10 @@ if __name__ == "__main__":
     print(mAP_calculate)
     mAP = mAP_calculate / float(len(subdirs))
     float(mAP)
-
     print(mAP)
-
     print(dict_precision)
 
-    labels, total = [], []
-    for key, item in dict_precision.items():
-        labels.append(key)
-        total.append(item)
-
-    x = np.arange(5)
-    plt.bar(x, height=total)
-    plt.xticks(x + .5, labels)
-    # plt.show()
-    plt.savefig(tiles_folder + '/' + 'mAP.png')
-    print("---saving----")
-
-
+    save_histogram_mAP(dict_precision)
 
 
 
