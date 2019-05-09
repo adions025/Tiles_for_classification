@@ -110,7 +110,7 @@ if __name__ == "__main__":
   ROOT_DIR = os.path.abspath("../")
   sys.path.append(ROOT_DIR)
 
-  folder2 = os.path.join(ROOT_DIR, "dataset/test")
+  folder2 = os.path.join(ROOT_DIR, "dataset/tiles")
   results_dir = os.path.join(ROOT_DIR, "dataset/results")
   model_file = os.path.join(ROOT_DIR, "src/tf_files/retrained_graph.pb")
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
   font = os.path.join(ROOT_DIR, "font/FiraMono-Medium.otf")
   print(font)
-  font = ImageFont.truetype(font, 25)
+  font = ImageFont.truetype(font, 30)
 
   subdirs = []
   for subdir in os.listdir(folder2):
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     grabNamesImages(subdir_fullpath)
     imgs_list = open(subdir_fullpath + '/image.txt', 'r').readlines()
 
-    with open(subdir_fullpath + "/" + "results.csv", 'a') as f:
+    with open(create_dir + "/" + "results.csv", 'a') as f:
       for image_name in imgs_list:
 
         img_name = image_name.strip().split('/')[-1]
@@ -151,6 +151,8 @@ if __name__ == "__main__":
         only_img = (img_name.split('.jpg')[0])
 
         img = Image.open(file_path)
+        #img = Image.new('RGBA', size=25, color='black')
+
         draw = ImageDraw.Draw(img)
 
         graph = load_graph(model_file)
@@ -202,7 +204,8 @@ if __name__ == "__main__":
           print("this is best ", best)
           print("thi is all ", last)
 
-          draw.text((0, 0), last, (255, 255, 255), font=font)
+
+          draw.text((0, 0), last, fill=(0, 0, 0), font=font) #
 
           img.save(create_dir+"/"+img_name)
 
