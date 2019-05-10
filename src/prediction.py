@@ -27,38 +27,15 @@ from PIL import ImageDraw
 
 def load_graph(model_file):
 
-  #with tf.device('/gpu:0'):
+  with tf.device('/gpu:0'):
+    graph = tf.Graph()
+    graph_def = tf.GraphDef()
+    with open(model_file, "rb") as f:
+      graph_def.ParseFromString(f.read())
+    with graph.as_default():
+      tf.import_graph_def(graph_def)
 
-  graph = tf.Graph()
-  graph_def = tf.GraphDef()
-
-  with open(model_file, "rb") as f:
-    graph_def.ParseFromString(f.read())
-  with graph.as_default():
-    tf.import_graph_def(graph_def)
-
-  return graph
-
-
-
-
-
-def read_tensors_from_image_files(file_names, input_height=299, input_width=299, input_mean=0, input_std=255):
-  with tf.Graph().as_default():
-    input_name = "file_reader"
-    output_name = "normalized"
-    file_name_placeholder = tf.placeholder(tf.string, shape=[])
-    file_reader = tf.read_file(file_name_placeholder, input_name)
-    image_reader = tf.image.decode_jpeg(file_reader, channels=3,
-                                        name='jpeg_reader')
-    float_caster = tf.cast(image_reader, tf.float32)
-    dims_expander = tf.expand_dims(float_caster, 0)
-    resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
-    normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
-
-    with tf.Session() as sess:
-      for file_name in file_names:
-        yield sess.run(normalized, {file_name_placeholder: file_name})
+    return graph
 
 
 def read_tensor_from_image_file(file_name, input_height=299, input_width=299,
@@ -86,6 +63,7 @@ def read_tensor_from_image_file(file_name, input_height=299, input_width=299,
 
   return result
 
+
 def load_labels(label_file):
   label = []
   proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
@@ -111,8 +89,8 @@ if __name__ == "__main__":
   sys.path.append(ROOT_DIR)
 
   folder2 = os.path.join(ROOT_DIR, "dataset/tiles")
-  results_dir = os.path.join(ROOT_DIR, "dataset/results")
-  model_file = os.path.join(ROOT_DIR, "src/tf_files/retrained_graph.pb")
+  results_dir = os.path.join(ROOT_DIR, "dataset/results3")
+  model_file = os.path.join(ROOT_DIR, "src/tf_files2/retrained_graph.pb")
 
   label_file = "tf_files/retrained_labels.txt"
   input_height = 299
@@ -151,8 +129,6 @@ if __name__ == "__main__":
         only_img = (img_name.split('.jpg')[0])
 
         img = Image.open(file_path)
-        #img = Image.new('RGBA', size=25, color='black')
-
         draw = ImageDraw.Draw(img)
 
         graph = load_graph(model_file)
@@ -162,7 +138,6 @@ if __name__ == "__main__":
                                     input_mean=input_mean,
                                     input_std=input_std
                                   )
-
         input_name = "import/" + input_layer
         output_name = "import/" + output_layer
         input_operation = graph.get_operation_by_name(input_name);
@@ -180,43 +155,24 @@ if __name__ == "__main__":
           top_k = results.argsort()[-5:][::-1]
           labels = load_labels(label_file)
 
-
           print('\nEvaluation time (1-image): {:.3f}s\n'.format(end-start))
           template = "{} (score={:0.5f})"
           for i in top_k:
-            print(template.format(labels[i], results[i]))
+            #print(template.format(labels[i], results[i]))
             best_result.update({labels[i]:results[i]})
-
-
-          print("This", max(best_result.values(), key=float))
 
           best = max((best_result.values()))
 
           for x, j in best_result.items():
             if j == best:
               labeling = x
-              print(labeling)
-
-
-          print(best_result)
           last = str(labeling + " : " + str(best))
-
-          print("this is best ", best)
-          print("thi is all ", last)
-
-
           draw.text((0, 0), last, fill=(0, 0, 0), font=font) #
-
           img.save(create_dir+"/"+img_name)
-
           results_in_file = str(only_img +' - '+ last)
-
         f.write(results_in_file+'\n')
 
-          #csv = csv.writer(f)
-          #csv.writerow(results_in_file)
-
-          #f.write('%s\n' %(results_in_file))
 
 
-    #f.close()
+
+    f.close()
