@@ -19,6 +19,7 @@ In the dataset folder, we find the files to prepare our set images.
 inside, it makes use of the functions of "min of the maxes"and "max of the min",
 from here we detect, if we have annotation in tile, and that percentage of annotation
 in the tile, and create different folders for each type of these annotations.
+You can fin more information here  [TILE IMAGE](https://github.com/adions025/tile_for_classification/tree/master/dataset). README file just for tile process.
 
 - **damageStats.py:**  This file save histogram the distribution after tiling images.
 
@@ -32,6 +33,7 @@ for uniform distribution.
 
 ## Training, predictions and results 
 usage:
+The main files are in /src:
 
 - **train.py:** To train the model using the inception architecture, you will have to put your different classes in 
 different folders, for images or tiles with more than one annotation you will have to use a multi-damage folder. 
@@ -43,6 +45,9 @@ It also saves a .csv file of results for each class, thus we can get more metric
 
 - **results.py:** What it does is read the csv file in each class we have obtained, to calculate the mAP.
 
+## Versioning
+You can use the script I made to get the different versions [**versionsLinux.sh**], make sure this file has the execution permissions. With this file you will get the different versions of the project. 
+You can use this file in unix systems, but if you are in Windows make sure you change the extension to [**.bat**].
 
 ## Authors
 
