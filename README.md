@@ -50,6 +50,9 @@ It also saves a .csv file of results for each class, thus we can get more metric
 
 ![Deep Convolutional Architecture for classification Inception v3](assets/prediction.png)
 
+- **results.py:** calculate the mAP for each class.
+![Deep Convolutional Architecture for classification Inception v3](assets/mAP1.png)
+
 ## Versioning
 You can use the script I made to get the different versions [**versionsLinux.sh**], make sure this file has the execution permissions. With this file you will get the different versions of the project. 
 You can use this file in unix systems, but if you are in Windows make sure you change the extension to [**.bat**].
