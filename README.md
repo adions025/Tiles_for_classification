@@ -1,4 +1,4 @@
-# TILES CLASSIFICATION
+# TILES CLASSIFICATION using INCEPTION V3
 
 ## Requirements
 Python 3.6 
@@ -13,7 +13,7 @@ $ git clone http://141.252.12.43/adions025/damagedetection.git
 ## Preprocessing of dataset images
 usage:
 
-In the dataset folder, we find the files to prepare our set images. We find different files:
+In the dataset folder, we find the files to prepare our set images. 
 
 - **damageTiles.py:**  Tiles the image and for each tile, it will calculate if there is an annotation
 inside, it makes use of the functions of "min of the maxes"and "max of the min",
