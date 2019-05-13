@@ -19,7 +19,7 @@ ROOT_DIR = os.path.abspath("../")
 sys.path.append(ROOT_DIR)
 
 tiles = os.path.join(ROOT_DIR, "dataset/tiles")
-data = os.path.join(ROOT_DIR, "dataset/data")
+data = os.path.join(ROOT_DIR, "dataset/data2")
 
 print(tiles)
 
@@ -30,7 +30,7 @@ datagen = ImageDataGenerator(
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest')
+        fill_mode='constant')
 class_size=100
 
 subdirs = []
