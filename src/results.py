@@ -21,7 +21,6 @@ def read_csv_file(path):
     imgs_list = open(path + '/results.csv', 'r').readlines()
     return imgs_list
 
-
 def list_dirs(path):
     subdirs = []
     for subdir in os.listdir(path):
@@ -47,13 +46,15 @@ if __name__ == "__main__":
     subdirs = list_dirs(tiles_folder)
     mAP_calculate = 0.0
     dict_precision = {}
-
+    total_tp = 0
+    total_predictions = 0
     for subdir in subdirs:
         subdir_fullpath = os.path.join(tiles_folder, subdir)
         imgs_list = read_csv_file(subdir_fullpath)
 
         tp = 0
         fp = 0
+
 
         for img in imgs_list:
             img_name = img.strip().split('/')[-1]
@@ -84,12 +85,11 @@ if __name__ == "__main__":
 
             #counting TP, FP
             if subdir == only_label:
-                print("this one", only_label)
                 tp = tp + 1
             else :
-                print("this no: ", only_label)
                 fp = fp + 1
             #print (only_label)
+
 
         print("---------------------------")
         print("TP, FP",tp, fp)
@@ -101,14 +101,24 @@ if __name__ == "__main__":
         mAP_calculate = mAP_calculate +  precision
         float(mAP_calculate)
 
-    print("this is mAP_calculate: ", mAP_calculate)
+        total_tp = (float(total_tp) + float(tp))
+        float(total_tp)
+        tp_fp = tp + fp
+        total_predictions = total_predictions + tp_fp
+
+
+    print("this is total: ", float(total_tp))
+    print("this is total predictions : ", float(total_predictions))
+
     print(mAP_calculate)
     mAP = mAP_calculate / float(len(subdirs))
     float(mAP)
-    print(mAP)
+    print("this is de mAP global: ",mAP)
     print(dict_precision)
 
-    save_histogram_mAP(dict_precision)
+    print("Acuraccy = ", total_tp/total_predictions)
+
+    #save_histogram_mAP(dict_precision)
 
 
 
