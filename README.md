@@ -48,9 +48,10 @@ It also saves a .csv file of results for each class, thus we can get more metric
 ## Running the Results
 - **prediction.py:** after running this file you can get your prediction.
 
-![Deep Convolutional Architecture for classification Inception v3](assets/prediction.png)
+![Deep Convolutional Architecture for classification Inception v3](assets/prediction1.png)
 
 - **results.py:** calculate the mAP for each class.
+
 ![Deep Convolutional Architecture for classification Inception v3](assets/mAP1.png)
 
 ## Versioning
