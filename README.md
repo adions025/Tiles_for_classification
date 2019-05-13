@@ -10,34 +10,43 @@ Python 3.6
 $ git clone http://141.252.12.43/adions025/damagedetection.git
 ```
 
-## Usage
+## Preprocessing of dataset images
 usage:
 
-```
-$ python damageTiles.py [-h] [--weight N] [--height N] [--threshold N]
-```
+In the dataset folder, we find the files to prepare our set images. We find different files:
 
- - default values:
- 
- 1. weight = 1500
- 2. height = 1500
- 3. threshold = 10
+- **damageTiles.py:**  Tiles the image and for each tile, it will calculate if there is an annotation
+inside, it makes use of the functions of "min of the maxes"and "max of the min",
+from here we detect, if we have annotation in tile, and that percentage of annotation
+in the tile, and create different folders for each type of these annotations.
 
-## Tiles
+- **damageStats.py:**  This file save histogram the distribution after tiling images.
 
-The program will load images previously listed from a directory, or multiple directories because there is a list of directories, this is useful if there are different datasets. Then reads the images and returns image size, dimension and numpy array. It will receive by parameters, the values of the width and of the height of the tiles, defined in a tuple in the program, offset(h,w), and also it will receive the value of the threshold, to separate the small damages that can interfere in the training, these values can also be used as an argument, as follows: --weight N --height N --threshold N, the corresponding value of these values is defined in N.
+- **damageAugm.py:** This file allows us to augment the images in our unbalanced dataset, 
+it allows us to create a given class size the amount we need to balance, you can also use this class in real time while
+ training the model. 
 
-It will start to iterate each image, and for each one will read a XML file of annotations where it will find the coordinates, xmin, xmax, ymin, ymax for each one of the annotations, these values we save them, to pass them the function of tiling image. It will also pass the name of the image, the type of damage, the threshold, the offset mentioned above, the dimension, and a path that defines where we want to save the tiles, then start to iterate each row, and each column of the image to cropping the image in tiles, given the tuple of dimensions of the image and the offset we get the total number of tiles for the width and height. In the same iteration, for each tile, it will calculate if there is an annotation inside, it makes use of the functions of "min of the maxes" and "max of the min", from here we detect, if we have annotation in tile, and that percentage of annotation in the tile.
-
-- In the first case if we have annotation in tile and the percentage is greater than the threshold given, this tile will be saved in its folder corresponding to the damage:
-    - Erosion
-    - Surface Damage [SD]
-    - Burst and Cracks [B&C]
-    - Dirt
--	In the second case we also check if there is an annotation inside the tile, but if the percentage is lower than the given threshold, a folder called small damages will be created, this will help not to interfere in the training tiles with small or no annotation.
--	And for the rest of the cases, the tiles without annotations, a folder will be created with name no damage.
+- **damageSplitDataset.py:** Use this file if you want split your dataset, just use value between 0.0 and 1.0 
+for uniform distribution.
 
 
+## Training, predictions and results 
+usage:
+
+- **train.py:** To train the model using the inception architecture, you will have to put your different classes in 
+different folders, for images or tiles with more than one annotation you will have to use a multi-damage folder. 
+Make sure you put the right path where you have your subfolders.
+
+- **prediction.py:** This file allows us to predict our testing folder, but it also saves these results writing in the 
+tile the precision value and the class.
+It also saves a .csv file of results for each class, thus we can get more metrics and get conclusions from our model.
+
+- **results.py:** What it does is read the csv file in each class we have obtained, to calculate the mAP.
+
+
+## Authors
+
+* **Adonis González Godoy** - *tiles for classifications with inception v3 - transfer learning* - [NHL Stenden University](https://github.com/adions025)
 
 
 
