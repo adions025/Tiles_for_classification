@@ -13,89 +13,93 @@ import math
 import random
 import numpy as np
 from shutil import copyfile
+import cv2
 
-
+#--------------------------------------------------------#
 ROOT_DIR = os.path.abspath("../")
 sys.path.append(ROOT_DIR)
 
-tiles = os.path.join(ROOT_DIR, "dataset/tiles")
-data = os.path.join(ROOT_DIR, "dataset/data2")
+tiles = os.path.join(ROOT_DIR, "dataset/all/1500x1500_20")
+data = os.path.join(ROOT_DIR, "dataset/data7_1500_20_aug")
+#--------------------------------------------------------#
 
-print(tiles)
+def random_augmentations():
+    datagen = ImageDataGenerator(
+            #rotation_range=90,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            shear_range=0.2,
+            zoom_range=0.2,
+            horizontal_flip=True,
+            vertical_flip=False,
+            brightness_range=[1.0, 1.5], #random brigthness uniform
+            fill_mode='reflect')
+            #fill_mode='constant') #black mode
+    return datagen
 
-datagen = ImageDataGenerator(
-        rotation_range=40,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
-        fill_mode='constant')
-class_size=100
+if __name__ == "__main__":
 
-subdirs = []
-for dir in os.listdir(tiles):
-    subdirs.append(dir)
+    class_size=100
+    datagen = random_augmentations()
 
-dict = {}
-for subdir in subdirs:
-    subdir_fullpath = os.path.join(tiles, subdir)
+    subdirs = []
+    for dir in os.listdir(tiles):
+        subdirs.append(dir)
 
-    list_class = os.listdir(subdir_fullpath)
-    for img in list_class:
+    dict = {}
+    for subdir in subdirs:
+        subdir_fullpath = os.path.join(tiles, subdir)
+
         list_class = os.listdir(subdir_fullpath)
-        count_class = len(os.listdir(subdir_fullpath))
+        for img in list_class:
+            list_class = os.listdir(subdir_fullpath)
+            count_class = len(os.listdir(subdir_fullpath))
 
-        print(count_class)
-        ratio = math.floor(class_size / count_class) - 1
-        print("this is ratio", ratio)
-        print(count_class,count_class*(ratio+1))
+            print(count_class)
+            ratio = math.floor(class_size / count_class) - 1
+            print("this is ratio", ratio)
+            print(count_class,count_class*(ratio+1))
 
-        img = load_img(os.path.join(subdir_fullpath, img))
+            img = load_img(os.path.join(subdir_fullpath, img))
 
-        x = img_to_array(img)
-        x = x.reshape((1,) + x.shape)
-        i = 0
+            x = img_to_array(img)
+            x = x.reshape((1,) + x.shape)
+            i = 0
 
-        if count_class <= 100:
-            if not os.path.exists(data):
-                os.makedirs(data)
+            if count_class <= 100:
+                if not os.path.exists(data):
+                    os.makedirs(data)
 
-            dest_dir = os.path.join(data, subdir)
+                dest_dir = os.path.join(data, subdir)
 
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
+                if not os.path.exists(dest_dir):
+                    os.makedirs(dest_dir)
 
+                for batch in datagen.flow(x, batch_size=1, save_to_dir=dest_dir, save_format='jpg'):
+                    i += 1
+                    if i > ratio:
+                        break
+            else:
+                dest_dir = os.path.join(data, subdir)
+                if not os.path.exists(data):
+                    os.makedirs(data)
 
-            for batch in datagen.flow(x, batch_size=1, save_to_dir=dest_dir, save_format='jpg'):
-                i += 1
-                if i > ratio:
-                    break
+                if not os.path.exists(dest_dir):
+                    os.makedirs(dest_dir)
 
+                files = os.listdir(subdir_fullpath)
+                print(files)
+                #index = random.randrange(0, len(files))
+                index = np.random.choice(len(files), 100, replace=False)
+                print(index)
 
-        else:
-            dest_dir = os.path.join(data, subdir)
-            if not os.path.exists(data):
-                os.makedirs(data)
+                for x in index:
+                    print(files[x])
+                    file_to_copy = os.path.join(subdir_fullpath, files[x])
+                    print(file_to_copy)
+                    copyfile(file_to_copy, dest_dir+"/"+files[x])
 
-
-            if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
-
-
-            files = os.listdir(subdir_fullpath)
-            print(files)
-            #index = random.randrange(0, len(files))
-            index = np.random.choice(len(files), 100, replace=False)
-            print(index)
-
-            for x in index:
-                print(files[x])
-                file_to_copy = os.path.join(subdir_fullpath, files[x])
-                print(file_to_copy)
-                copyfile(file_to_copy, dest_dir+"/"+files[x])
-
-            break
+                break
 
 
 
