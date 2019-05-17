@@ -16,15 +16,11 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 
-folder1 = os.path.join(ROOT_DIR, "tiles")
+folder1 = os.path.join(ROOT_DIR, "all/1500x1500_20")
 
-print(folder1)
-
-
-
-data = os.path.join(ROOT_DIR, "data")
-path0 = os.path.join(ROOT_DIR, "data/train")
-path1 = os.path.join(ROOT_DIR, "data/val")
+data = os.path.join(ROOT_DIR, "data_s_1500x1500_20") #folderbase
+path0 = os.path.join(ROOT_DIR, "data_s_1500x1500_20/train")#folderbase/train
+path1 = os.path.join(ROOT_DIR, "data_s_1500x1500_20/test")#folderbase/test
 
 
 def img_train_test_split(img_source_dir, train_size):
@@ -87,7 +83,7 @@ def img_train_test_split(img_source_dir, train_size):
                     validation_counter += 1
 
         print('Copied ' + str(train_counter) + ' images to data/train/' + subdir)
-    print('Copied ' + str(validation_counter) + ' images to data/validation/' + subdir)
+    print('Copied ' + str(validation_counter) + ' images to data/test/' + subdir)
 
 if __name__ == "__main__":
 
