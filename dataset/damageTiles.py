@@ -11,10 +11,10 @@ Written by Adonis Gonzalez
 ------------------------------------------------------------
 
 usage:
-$ python damageTiles.py [-h] [--weight N] [--height N] [--threshold N]
+$ python damageTiles.py [-h] [--width N] [--height N] [--threshold N]
 
  default values
- 1  weight = 1500
+ 1  width = 1500
  2. height = 1500
  3. threshold = 10
 
@@ -38,7 +38,7 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
-folder2 = os.path.join(ROOT_DIR, "all")
+folder2 = os.path.join(ROOT_DIR, "data_final")
 
 path = [folder2]
 
@@ -66,7 +66,7 @@ def size_tiles(img_shape, offset):
        means that incomplete tiles will not be taken into the calculation.
 
     img_shape: is the dimension of the image (H,W,D), i dont use depth.
-    offset: is heigh and weigth given, [0][1] as tuple.
+    offset: is heigh and width given, [0][1] as tuple.
     """
     num_tiles_w = (int(math.floor(img_shape[0] / (offset[1] * 1.0))))
     num_tiles_h = (int(math.floor(img_shape[1] / (offset[0] * 1.0))))
@@ -84,10 +84,9 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
        small damages, if it is greater creates a folder and saves the images with annotations in their
        corresponding folder. In the last case if there is no damage or annotation in the tile, it is saved
        in a folder no_damage.
-
     path: in this path it will be save the image.
     img_shape: is the dimension of the image (H,W,D), i dont use depth.
-    offset: is heigh and weigth given, [0][1] as tuple.
+    offset: is heigh and width given, [0][1] as tuple.
     img: array of the image.
     xmin, xmax, ymin, ymax : coordinates in xml file (annotations).
     name_damage: given in xml file.
@@ -119,9 +118,11 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
             no_damage = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
 
             #two annotations or mor
-            if (len(total_annotation) > 1):
+            if len(total_annotation) > 1:
+
                 if (tmp_w >= 0) and (tmp_h >= 0):  # check is there is annotations
-                    if (thresh > threshold):  #percentage of threshold is bigger
+                    if thresh >= threshold:  # percentage of threshold is bigger
+
                         if (i, j) in dic_damages:  # more thant one damage
                             if dic_damages[(i, j)] == name_damage:  # 2 damages == same type
                                 if not os.path.exists(path + "/" + name_damage):
@@ -141,18 +142,26 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                         if (len(total_annotation) > 1) and not (i, j) in dic_damages:
                             dic_damages[(i, j)] = name_damage
                             print(dic_damages[(i, j)])
+
                     # small damage
-                    if (tmp_w >= 0) and (tmp_h >= 0) and thresh < threshold:
+                    else:
                         if not os.path.exists(path + "/" + "small_damage"):
                             os.mkdir(path + "/" + "small_damage")
                             print("folder created: ", "small_damage")
                             cv2.imwrite(small_damage, cropped_img)
                         else:
                             cv2.imwrite(small_damage, cropped_img)
+                else:
+                    if not os.path.exists(path + "/" + "no_damage"):
+                        os.mkdir(path + "/" + "no_damage")
+                        print("folder created: ", "no_damage")
+                        cv2.imwrite(no_damage, cropped_img)
+                    else:
+                        cv2.imwrite(no_damage, cropped_img)
 
             #only one annotation
-            if (len(total_annotation) == 1):
-                if (thresh > 1):
+            if len(total_annotation) == 1:
+                if thresh > threshold:
                     if (tmp_w >= 0) and (tmp_h >= 0):
                         if not os.path.exists(path + "/" + name_damage):
                             os.mkdir(path + "/" + name_damage)
@@ -187,6 +196,10 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                     cv2.imwrite(no_damage, cropped_img)
 
 
+
+
+
+
 def couting_annotations_in_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, total_annotation,dic_damages2,dic_damages3 ):
     dic_4 = {}
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
@@ -217,11 +230,10 @@ def couting_annotations_in_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, 
         print (key, "=>", val)
 
 
-def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, total_annotation):
+def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name, threshold, dic_damages, total_annotation, dictonary, dictonary1):
     """This function allow debug each tile.
-
     img_shape: is the dimension of the image (H,W,D), i dont use depth
-    offset: is heigh and weigth given, [0][1] as tuple
+    offset: is heigh and width given, [0][1] as tuple
     img: array of the image
     xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
     name_damage: given in xml file
@@ -239,6 +251,30 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
             tmp_w = min(stop_x, xmax) - max(start_x,xmin)
             tmp_h = min(stop_y, ymax) - max(start_y,ymin)
 
+            tmp_xmin1 = min(stop_x, xmax)
+            tmp_xmax1 = max(start_x, xmin)
+            tmp_ymin1 = min(stop_y, ymax)
+            tmp_ymax1 = max(start_y, ymin)
+
+            tmp_xmin = tmp_xmin1 / int(math.floor(img_shape[0] / (offset[1] * 1.0)))
+            tmp_xmax = tmp_xmax1 / int(math.floor(img_shape[0] / (offset[1] * 1.0)))
+            tmp_ymin = tmp_ymin1 / int(math.floor(img_shape[1] / (offset[1] * 1.0)))
+            tmp_ymax = tmp_ymax1 / int(math.floor(img_shape[1] / (offset[1] * 1.0)))
+
+
+            # ------------------------------------------#
+            one_damage = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+            one_damage_txt = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".txt")
+
+            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+            multi_damage_txt = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".txt")
+
+            small_damage = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+            small_damage_txt = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".txt")
+
+            no_damage = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+            # ------------------------------------------#
+
             tmp_w_h =  tmp_w * tmp_h
             first_mul =(stop_x - start_x)
             second_mul = (stop_y - start_y)
@@ -251,8 +287,57 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
             print(len(total_annotation))
             p = (float(tmp_w_h) / float(tmp_m))
             th = p * 100
+
+            #list = []
+
+
             if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
-                    print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
+                #dictonary = ({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)})
+
+                if (i, j) in dictonary:
+                    print('this tilex exis', (i,j))
+                    dictonary1.update({(i,j): (tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
+                else:
+                    dictonary.update({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
+
+                matched_item = set(dictonary.keys()) and set(dictonary1.keys())
+
+                print(type(matched_item))
+                print(matched_item)
+
+
+                for x in matched_item:
+                    print("thisis ", x)
+                    if x in dictonary:
+                        print("solution ", dictonary[x])
+                        repeat_tile = dictonary[x]
+
+                    if x in dictonary1:
+                        print("solution1 ", dictonary1[x])
+                        repeat_tile1 = dictonary1[x]
+
+                    final = (repeat_tile, repeat_tile1)
+
+
+                if (i, j) in dic_damages:
+
+                    if dic_damages[(i, j)] == name_damage:
+                        print("same type")
+                        print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
+                        print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+
+
+                    else:
+                        print("2 DIFFERENT DAMAGE")
+                        print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+                        print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
+
+
+                print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
+                print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+
+                dic_damages[(i, j)] = name_damage
+                print(dic_damages[(i, j)])
 
             print("---------------------------------------------------------------------------------")
 
@@ -294,19 +379,47 @@ def grab_images(path):
         print("---------------------------------------------------------------------------------")
 
 
+def multiple_small_damages(path):
+    subdirs = []
+    for dir in os.listdir(folder2):
+        subdirs.append(dir)
+
+    for subdir in subdirs:
+        subdir_fullpath = os.path.join(folder2, subdir)
+
+        if os.path.exists(subdir_fullpath+"/"):
+            if subdir == "no_damage":
+                no_damage = os.listdir(subdir_fullpath)
+
+            if subdir == "small_damage":
+                small = os.listdir(subdir_fullpath)
+
+    ambas = set(no_damage) & set(small)
+    #a = [i for i, j in zip(images, images2) if i == j]
+    final_list = list(ambas)
+
+
+    for img in final_list:
+        if os.path.isfile(folder2+"/"+ "no_damage"+ "/"+img):
+            #print(img)
+            os.remove(folder2+"/"+ "no_damage"+ "/"+img)
+            print("deleting: ", img)
+
+
+
+
 if __name__ == "__main__":
 
-
-    WEIGHT = 1000
-    HEIGHT = 1000
-    THRESHOLD = 1
+    WIDTH = 1500
+    HEIGHT = 1500
+    THRESHOLD = 5
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
-    parser.add_argument('--weight',required=False,
-                        default=WEIGHT,
+    parser.add_argument('--width',required=False,
+                        default=WIDTH,
                         metavar="N",
                         type=int,
-                        help='weigth 1500')
+                        help='width 1500')
 
     parser.add_argument('--height', required=False,
                         default=HEIGHT,
@@ -331,14 +444,15 @@ if __name__ == "__main__":
             dic_damages = {}#saving (i,j):name_damage //to check is there is two damage
             dic_damages2 = {}
             dic_damages3 ={}
+            dictonary, dictonary1 = {}, {}
             img_name = img.strip().split('/')[-1]
             filename = (dir +'/'+img_name)
             img_shape, img = load_image(filename)
-            offset = (args.weight, args.height)
+            offset = (args.width, args.height)
             num_tiles =  size_tiles(img_shape, offset)
 
             print("number of tile :",num_tiles)
-            print("this is widgth tile :", args.weight)
+            print("this is widgth tile :", args.width)
             print("this is heigth tile :", args.height)
             print('this is this image', filename)
 
@@ -398,7 +512,7 @@ if __name__ == "__main__":
 
 
                     #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation)
+                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
 
 
 
@@ -406,5 +520,8 @@ if __name__ == "__main__":
                      #                   ymin[category_id],ymax[category_id],name_damage, only_img)
 
 
+
+
+    multiple_small_damages(dir)
 
 
