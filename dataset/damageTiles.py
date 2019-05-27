@@ -112,10 +112,15 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
             tile_percent = (float(annotation_dim) / float(tile_dim))
             thresh = (tile_percent * 100)
             #-------------------------------------------#
-            one_damage = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            small_damage = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            no_damage = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
+            one_damage = (path + "/" + name_damage + '/' + img_name + "_" + str(i) + "_" + str(j) + ".jpg")
+            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name + "_" + str(i) + "_" + str(j) + ".jpg")
+            small_damage = (path + "/" + "small_damage" + '/' + img_name + "_" + str(i) + "_" + str(j) + ".jpg")
+            no_damage = (path + '/' + "no_damage" + '/' + img_name + "_" + str(i) + "_" + str(j) + ".jpg")
+
+
+            print("--------------------------")
+            print("this tile : ", [i], [j])
+
 
             #two annotations or mor
             if len(total_annotation) > 1:
@@ -143,7 +148,7 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                             dic_damages[(i, j)] = name_damage
                             print(dic_damages[(i, j)])
 
-                    # small damage
+                    # small multiple damage
                     else:
                         if not os.path.exists(path + "/" + "small_damage"):
                             os.mkdir(path + "/" + "small_damage")
@@ -160,9 +165,9 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                         cv2.imwrite(no_damage, cropped_img)
 
             #only one annotation
-            elif len(total_annotation) == 1:
+            if len(total_annotation) == 1:
                 if (tmp_w >= 0) and (tmp_h >= 0):
-                    if thresh >= threshold:
+                    if thresh >= threshold: #check percentage of damage inside tile
                         print("this is threshold:, ",thresh, threshold)
                         if not os.path.exists(path + "/" + name_damage):
                             os.mkdir(path + "/" + name_damage)
@@ -172,7 +177,6 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                             cv2.imwrite(one_damage, cropped_img)
 
                     else:
-
                         if not os.path.exists(path + "/" + "small_damage"):
                             os.mkdir(path + "/" + "small_damage")
                             print("folder created: ", "small_damage")
@@ -181,26 +185,123 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                             cv2.imwrite(small_damage, cropped_img)
 
                 else:
-                    if not (tmp_w >= 0) and not (tmp_h >= 0):
-                        if not os.path.exists(path + "/" + "no_damage"):
-                            os.mkdir(path + "/" + "no_damage")
-                            print("folder created: ", "no_damage")
-                            cv2.imwrite(no_damage, cropped_img)
+                    print("no damage tile")
+                    if not os.path.exists(path + "/" + "no_damage"):
+                        os.mkdir(path + "/" + "no_damage")
+                        print("folder created: ", "no_damage")
+                        cv2.imwrite(no_damage, cropped_img)
+                    else:
+                        cv2.imwrite(no_damage, cropped_img)
+
+            print("--------------------------")
+
+
+def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, overlap_tile):
+
+    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
+        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
+
+            calc_over = (offset[0] * overlap_tile) / 100
+            overlap_tiles = offset[0] - calc_over
+
+            print("----cccc-------")
+            print(overlap_tiles)
+
+            start_y = (overlap_tiles * i )
+            stop_y = start_y + offset[1]
+            start_x = (overlap_tiles * j )
+            stop_x = start_x + offset[0]
+            cropped_img = img[start_y:stop_y,start_x:stop_x ]
+            #------------------------------------------#
+
+            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
+            annotation_dim =  (tmp_w * tmp_h)
+            tile_dim = offset[0] * offset[1]
+
+            tile_percent = (float(annotation_dim) / float(tile_dim))
+            thresh = (tile_percent * 100)
+            #-------------------------------------------#
+            one_damage = (path + "/" + name_damage + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            small_damage = (path + "/" + "small_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            no_damage = (path + '/' + "no_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+
+            print("--------------------------")
+            print("this tile : ", [i], [j])
+
+            # two annotations or mor
+            if len(total_annotation) > 1:
+
+                if (tmp_w >= 0) and (tmp_h >= 0):  # check is there is annotations
+                    if thresh >= threshold:  # percentage of threshold is bigger
+
+                        if (i, j) in dic_damages:  # more thant one damage
+                            if dic_damages[(i, j)] == name_damage:  # 2 damages == same type
+                                if not os.path.exists(path + "/" + name_damage):
+                                    os.mkdir(path + "/" + name_damage)
+                                    print("folder created: ", name_damage)
+                                    cv2.imwrite(one_damage, cropped_img)
+                                else:
+                                    cv2.imwrite(one_damage, cropped_img)
+                            if dic_damages[(i, j)] != name_damage:  # 2 damages != different type
+                                print("different damage")
+                                if not os.path.exists(path + "/" + "mutiple_damage"):
+                                    os.mkdir(path + "/" + "mutiple_damage")
+                                    print("folder created: ", "mutiple_damage")
+                                    cv2.imwrite(multi_damage, cropped_img)
+                                else:
+                                    cv2.imwrite(multi_damage, cropped_img)
+                        if (len(total_annotation) > 1) and not (i, j) in dic_damages:
+                            dic_damages[(i, j)] = name_damage
+                            print(dic_damages[(i, j)])
+
+                    # small multiple damage
+                    else:
+                        if not os.path.exists(path + "/" + "small_damage"):
+                            os.mkdir(path + "/" + "small_damage")
+                            print("folder created: ", "small_damage")
+                            cv2.imwrite(small_damage, cropped_img)
                         else:
-                            cv2.imwrite(no_damage, cropped_img)
-
-            #no annotation, no damage
-            if not (tmp_w >= 0) and not (tmp_h >= 0):
-                if not os.path.exists(path + "/" + "no_damage"):
-                    os.mkdir(path + "/" + "no_damage")
-                    print("folder created: ", "no_damage")
-                    cv2.imwrite(no_damage, cropped_img)
+                            cv2.imwrite(small_damage, cropped_img)
                 else:
-                    cv2.imwrite(no_damage, cropped_img)
+                    if not os.path.exists(path + "/" + "no_damage"):
+                        os.mkdir(path + "/" + "no_damage")
+                        print("folder created: ", "no_damage")
+                        cv2.imwrite(no_damage, cropped_img)
+                    else:
+                        cv2.imwrite(no_damage, cropped_img)
 
+            # only one annotation
+            if len(total_annotation) == 1:
+                if (tmp_w >= 0) and (tmp_h >= 0):
+                    if thresh >= threshold:  # check percentage of damage inside tile
+                        print("this is threshold:, ", thresh, threshold)
+                        if not os.path.exists(path + "/" + name_damage):
+                            os.mkdir(path + "/" + name_damage)
+                            print("folder created: ", name_damage)
+                            cv2.imwrite(one_damage, cropped_img)
+                        else:
+                            cv2.imwrite(one_damage, cropped_img)
 
+                    else:
+                        if not os.path.exists(path + "/" + "small_damage"):
+                            os.mkdir(path + "/" + "small_damage")
+                            print("folder created: ", "small_damage")
+                            cv2.imwrite(small_damage, cropped_img)
+                        else:
+                            cv2.imwrite(small_damage, cropped_img)
 
+                else:
+                    print("no damage tile")
+                    if not os.path.exists(path + "/" + "no_damage"):
+                        os.mkdir(path + "/" + "no_damage")
+                        print("folder created: ", "no_damage")
+                        cv2.imwrite(no_damage, cropped_img)
+                    else:
+                        cv2.imwrite(no_damage, cropped_img)
 
+            print("--------------------------")
 
 
 def couting_annotations_in_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, total_annotation,dic_damages2,dic_damages3 ):
@@ -426,9 +527,10 @@ def multiple_small_damages(path):
 
 if __name__ == "__main__":
 
-    WIDTH = 800
-    HEIGHT = 800
-    THRESHOLD = 5
+    WIDTH = 1000
+    HEIGHT = 1000
+    THRESHOLD = 1
+    OVERLAP_TILE = 10
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
     parser.add_argument('--width',required=False,
@@ -521,13 +623,17 @@ if __name__ == "__main__":
                     tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
                                   ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
 
+                    overlaping_tles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
+                                    OVERLAP_TILE)
+
 
                     #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
                      #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation,dic_damages2, dic_damages3)
 
 
-                    debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                                ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
+                    #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
+                      #          ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
 
 
 
