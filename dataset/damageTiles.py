@@ -120,22 +120,27 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
 
             print("--------------------------")
             print("this tile : ", [i], [j])
+            #print("total_annotation, ",len(total_annotation))
 
 
             #two annotations or mor
             if len(total_annotation) > 1:
-
                 if (tmp_w >= 0) and (tmp_h >= 0):  # check is there is annotations
+
+                    print("-------IN THIS TILE THERE IS DAMAGE----------")
                     if thresh >= threshold:  # percentage of threshold is bigger
 
+
                         if (i, j) in dic_damages:  # more thant one damage
-                            if dic_damages[(i, j)] == name_damage:  # 2 damages == same type
+                            if dic_damages[(i, j)] == name_damage:  # 2 damages == same typ
+                                print("same damage")
                                 if not os.path.exists(path + "/" + name_damage):
                                     os.mkdir(path + "/" + name_damage)
                                     print("folder created: ", name_damage)
                                     cv2.imwrite(one_damage, cropped_img)
                                 else:
                                     cv2.imwrite(one_damage, cropped_img)
+
                             if dic_damages[(i, j)] != name_damage:  # 2 damages != different type
                                 print("different damage")
                                 if not os.path.exists(path + "/" + "mutiple_damage"):
@@ -144,9 +149,26 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                                     cv2.imwrite(multi_damage, cropped_img)
                                 else:
                                     cv2.imwrite(multi_damage, cropped_img)
-                        if (len(total_annotation) > 1) and not (i, j) in dic_damages:
+
+                        else:
+
                             dic_damages[(i, j)] = name_damage
-                            print(dic_damages[(i, j)])
+                            print("here:",dic_damages[(i, j)])
+                            print("here:", dic_damages)
+
+                            if not os.path.exists(path + "/" + name_damage):
+                                os.mkdir(path + "/" + name_damage)
+                                print("folder created: ", name_damage)
+                                cv2.imwrite(one_damage, cropped_img)
+
+                            else:
+                                cv2.imwrite(one_damage, cropped_img)
+
+
+                        #elif
+                                #if not (i, j) in dic_damages:
+                                #dic_damages[(i, j)] = name_damage
+                               # print(dic_damages[(i, j)])
 
                     # small multiple damage
                     else:
@@ -156,13 +178,19 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                             cv2.imwrite(small_damage, cropped_img)
                         else:
                             cv2.imwrite(small_damage, cropped_img)
+                ''''
                 else:
+                    print("no damage")
                     if not os.path.exists(path + "/" + "no_damage"):
                         os.mkdir(path + "/" + "no_damage")
                         print("folder created: ", "no_damage")
                         cv2.imwrite(no_damage, cropped_img)
                     else:
                         cv2.imwrite(no_damage, cropped_img)
+                '''
+
+
+
 
             #only one annotation
             if len(total_annotation) == 1:
@@ -196,7 +224,7 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
             print("--------------------------")
 
 
-def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, overlap_tile):
+def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, overlap_tile, dictonary1,dictonary):
 
     for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
@@ -230,6 +258,60 @@ def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_da
             print("--------------------------")
             print("this tile : ", [i], [j])
 
+
+            if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
+                #dictonary = ({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)})
+
+                if (i, j) in dictonary:
+                    print('this tilex exis', (i,j))
+
+                    dictonary1.update({(i,j):(cropped_img, name_damage)})
+                else:
+                    dictonary.update({(i,j):(cropped_img, name_damage)})
+
+                matched_item = set(dictonary.keys()) and set(dictonary1.keys())
+
+                print(type(matched_item))
+                print(matched_item)
+
+                for x in matched_item:
+                    print("thisis ", x)
+                    if x in dictonary:
+                        #print("solution ", dictonary[x])
+                        repeat_tile = dictonary[x]
+
+                    if x in dictonary1:
+                        #print("solution1 ", dictonary1[x])
+                        repeat_tile1 = dictonary1[x]
+                    final = (repeat_tile, repeat_tile1)
+
+
+                if (i, j) in dic_damages:
+
+                    if dic_damages[(i, j)] == name_damage:
+                        print("same type")
+                        #print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
+                        #print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+
+
+                    else:
+                        print("2 DIFFERENT DAMAGE")
+
+
+
+                print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
+
+
+
+                dic_damages[(i, j)] = name_damage
+                print(dic_damages[(i, j)])
+
+            print("---------------------------------------------------------------------------------")
+
+
+
+
+
             # two annotations or mor
             if len(total_annotation) > 1:
 
@@ -238,6 +320,7 @@ def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_da
 
                         if (i, j) in dic_damages:  # more thant one damage
                             if dic_damages[(i, j)] == name_damage:  # 2 damages == same type
+                                print("SAME TYPE")
                                 if not os.path.exists(path + "/" + name_damage):
                                     os.mkdir(path + "/" + name_damage)
                                     print("folder created: ", name_damage)
@@ -265,6 +348,7 @@ def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_da
                         else:
                             cv2.imwrite(small_damage, cropped_img)
                 else:
+                    print("no damage")
                     if not os.path.exists(path + "/" + "no_damage"):
                         os.mkdir(path + "/" + "no_damage")
                         print("folder created: ", "no_damage")
@@ -411,9 +495,9 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
                 if (i, j) in dictonary:
                     print('this tilex exis', (i,j))
 
-                    dictonary1.update({(i,j): (tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
+                    dictonary1.update({(i,j):(cropped_img, name_damage)})
                 else:
-                    dictonary.update({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
+                    dictonary.update({(i,j):(cropped_img, name_damage)})
 
                 matched_item = set(dictonary.keys()) and set(dictonary1.keys())
 
@@ -424,11 +508,11 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
                 for x in matched_item:
                     print("thisis ", x)
                     if x in dictonary:
-                        print("solution ", dictonary[x])
+                        #print("solution ", dictonary[x])
                         repeat_tile = dictonary[x]
 
                     if x in dictonary1:
-                        print("solution1 ", dictonary1[x])
+                        #print("solution1 ", dictonary1[x])
                         repeat_tile1 = dictonary1[x]
 
                     final = (repeat_tile, repeat_tile1)
@@ -438,19 +522,17 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
                     if dic_damages[(i, j)] == name_damage:
                         print("same type")
-                        print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
-                        print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+                        #print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
+                        #print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
 
 
                     else:
                         print("2 DIFFERENT DAMAGE")
-                        print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
-                        print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
+
 
 
                 print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
-                print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
-                print(" thresh, threshold: ", threshold, thresh)
+
 
 
                 dic_damages[(i, j)] = name_damage
@@ -527,8 +609,8 @@ def multiple_small_damages(path):
 
 if __name__ == "__main__":
 
-    WIDTH = 1000
-    HEIGHT = 1000
+    WIDTH = 2000
+    HEIGHT = 2000
     THRESHOLD = 1
     OVERLAP_TILE = 10
 
@@ -620,12 +702,12 @@ if __name__ == "__main__":
                                     ymax[category_id] = int(child_of_root.text)
                                     print("this is de ymax: ", ymax[category_id])
 
-                    tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
+                    #tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                     #             ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
 
-                    overlaping_tles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
-                                    OVERLAP_TILE)
+                    #overlaping_tles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                    #              ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
+                     #               OVERLAP_TILE)
 
 
                     #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
@@ -633,8 +715,10 @@ if __name__ == "__main__":
 
 
                     #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                      #          ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
+                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
 
+                    tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                           ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
 
 
                     #saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
