@@ -38,7 +38,7 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
-folder2 = os.path.join(ROOT_DIR, "data_final")
+folder2 = os.path.join(ROOT_DIR, "test")
 
 path = [folder2]
 
@@ -160,9 +160,10 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                         cv2.imwrite(no_damage, cropped_img)
 
             #only one annotation
-            if len(total_annotation) == 1:
-                if thresh > threshold:
-                    if (tmp_w >= 0) and (tmp_h >= 0):
+            elif len(total_annotation) == 1:
+                if (tmp_w >= 0) and (tmp_h >= 0):
+                    if thresh >= threshold:
+                        print("this is threshold:, ",thresh, threshold)
                         if not os.path.exists(path + "/" + name_damage):
                             os.mkdir(path + "/" + name_damage)
                             print("folder created: ", name_damage)
@@ -170,6 +171,16 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                         else:
                             cv2.imwrite(one_damage, cropped_img)
 
+                    else:
+
+                        if not os.path.exists(path + "/" + "small_damage"):
+                            os.mkdir(path + "/" + "small_damage")
+                            print("folder created: ", "small_damage")
+                            cv2.imwrite(small_damage, cropped_img)
+                        else:
+                            cv2.imwrite(small_damage, cropped_img)
+
+                else:
                     if not (tmp_w >= 0) and not (tmp_h >= 0):
                         if not os.path.exists(path + "/" + "no_damage"):
                             os.mkdir(path + "/" + "no_damage")
@@ -177,14 +188,6 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
                             cv2.imwrite(no_damage, cropped_img)
                         else:
                             cv2.imwrite(no_damage, cropped_img)
-                else:
-
-                    if not os.path.exists(path + "/" + "small_damage"):
-                        os.mkdir(path + "/" + "small_damage")
-                        print("folder created: ", "small_damage")
-                        cv2.imwrite(small_damage, cropped_img)
-                    else:
-                        cv2.imwrite(small_damage, cropped_img)
 
             #no annotation, no damage
             if not (tmp_w >= 0) and not (tmp_h >= 0):
@@ -262,6 +265,14 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
             tmp_ymax = tmp_ymax1 / int(math.floor(img_shape[1] / (offset[1] * 1.0)))
 
 
+
+            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
+            annotation_dim =  (tmp_w * tmp_h)
+            tile_dim = offset[0] * offset[1]
+
+            tile_percent = (float(annotation_dim) / float(tile_dim))
+            thresh = (tile_percent * 100)
             # ------------------------------------------#
             one_damage = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
             one_damage_txt = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".txt")
@@ -274,6 +285,8 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
             no_damage = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
             # ------------------------------------------#
+
+
 
             tmp_w_h =  tmp_w * tmp_h
             first_mul =(stop_x - start_x)
@@ -296,6 +309,7 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
                 if (i, j) in dictonary:
                     print('this tilex exis', (i,j))
+
                     dictonary1.update({(i,j): (tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
                 else:
                     dictonary.update({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax, name_damage)})
@@ -335,6 +349,8 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
                 print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
                 print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
+                print(" thresh, threshold: ", threshold, thresh)
+
 
                 dic_damages[(i, j)] = name_damage
                 print(dic_damages[(i, j)])
@@ -410,8 +426,8 @@ def multiple_small_damages(path):
 
 if __name__ == "__main__":
 
-    WIDTH = 1500
-    HEIGHT = 1500
+    WIDTH = 800
+    HEIGHT = 800
     THRESHOLD = 5
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
@@ -510,9 +526,8 @@ if __name__ == "__main__":
                      #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation,dic_damages2, dic_damages3)
 
 
-
-                    #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
+                    debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
+                                ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
 
 
 
@@ -522,6 +537,6 @@ if __name__ == "__main__":
 
 
 
-    multiple_small_damages(dir)
+    #multiple_small_damages(dir)
 
 
