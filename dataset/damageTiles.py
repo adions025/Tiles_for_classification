@@ -11,7 +11,7 @@ Written by Adonis Gonzalez
 ------------------------------------------------------------
 
 usage:
-$ python damageTiles.py [-h] [--width N] [--height N] [--threshold N]
+$ python damageTiles.py [-h] [--width N] [--height N] [--threshold N] [--threshold N]
 
  default values
  1  width = 1500
@@ -20,7 +20,6 @@ $ python damageTiles.py [-h] [--width N] [--height N] [--threshold N]
  4. overlap_tile = 10
 
 '''
-
 
 from PIL import Image
 import numpy as np
@@ -31,7 +30,7 @@ import os.path as path
 import sys
 import xml.etree.cElementTree as ET
 import argparse
-
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(ROOT_DIR)
@@ -39,6 +38,7 @@ sys.path.append(ROOT_DIR)
 print(ROOT_DIR)
 path = []
 #folder1 = os.path.join(ROOT_DIR, "prueba1")
+#folder2 = os.path.join(ROOT_DIR, "../dataset3/base_folder/test")
 folder2 = os.path.join(ROOT_DIR, "test")
 
 path = [folder2]
@@ -69,16 +69,15 @@ def size_tiles(img_shape, offset):
     img_shape: is the dimension of the image (H,W,D), i dont use depth.
     offset: is heigh and width given, [0][1] as tuple.
     """
-    num_tiles_w = (int(math.floor(img_shape[0] / (offset[1] * 1.0))))
-    num_tiles_h = (int(math.floor(img_shape[1] / (offset[0] * 1.0))))
+    num_tiles_w = (int(math.ceil(img_shape[0] / (offset[1] * 1.0))))
+    num_tiles_h = (int(math.ceil(img_shape[1] / (offset[0] * 1.0))))
     num_tiles = num_tiles_h * num_tiles_w
     return num_tiles
 
 
 def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages):
-    """Cut the images in diferents tails,
-       the size of each tile is given by agurment or paramenter - in this case offset[0],[1]
-       And, in the same iteration is checking on each tile if there is annotation (damage), is this is True
+    """Cut images in diferents tiles, the size of each tile is given by agurment or paramenter - in this case
+       offset[0],[1]. And, in the same iteration is checking on each tile if there is annotation (damage), is this is True
        creates a folder(s) for each type of damage, but also checks the percentage of annotation inside of
        each tile, with the threshold given or using default value = 10 is compared if the annotation in the
        tile is lower than the value of threshold, in case to be True, proceeds to create a folder for
@@ -207,8 +206,8 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
 
 def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, overlap_tile):
 
-    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
-        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
+    for i in range(int(math.ceil(img_shape[0] / (offset[1] * 1.0)))):
+        for j in range(int(math.ceil(img_shape[1] / (offset[0] * 1.0)))):
 
             calc_over = (offset[0] * overlap_tile) / 100
             overlap_tiles = offset[0] - calc_over
@@ -420,7 +419,12 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
             #list = []
 
+            if (tmp_w >= 0) and (tmp_h >= 0):  # compruebo si hay anotacin
+                dictonary.update({(i,j):(name_damage)})
 
+            else:
+                dictonary1.update({(i,j):("no damage")})
+            """"
             if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
                 #dictonary = ({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)})
 
@@ -440,11 +444,11 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
                 for x in matched_item:
                     print("thisis ", x)
                     if x in dictonary:
-                        #print("solution ", dictonary[x])
+                        print("solution ", dictonary[x])
                         repeat_tile = dictonary[x]
 
                     if x in dictonary1:
-                        #print("solution1 ", dictonary1[x])
+                        print("solution1 ", dictonary1[x])
                         repeat_tile1 = dictonary1[x]
 
                     final = (repeat_tile, repeat_tile1)
@@ -472,6 +476,12 @@ def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage
 
             print("---------------------------------------------------------------------------------")
 
+        else:
+            dictonary2.update({(i,j):(cropped_img, "no damage")})
+            """""
+
+    return dictonary, dictonary1
+
 
 
 def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_name):
@@ -490,6 +500,33 @@ def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_na
     print("saving image")
 
 
+def drawing_ground_thuth(path, im_pil, img_name ,xmin, xmax, ymin, ymax, iter, total_annotation, color, thickness):
+    """This function draws all annotations from the coordinates of the xml file, at
+    the end it only saves one image.
+
+        path: where the image is read from
+        im_pil: PIL image format, PIL follows RGB color convention
+        xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
+        img_name: the name how it will be save it
+        iter: just a counter to check the last anotation and save after
+        total_annotation: list of anotation for each image, but we just need the len()
+        color: you can use HTML format, eg. R: #FF0000, B: #2E2EFE, Y:#FFFF00
+        thickness: the thickness of the line to draw
+        """
+    draw = ImageDraw.Draw(im_pil)
+    (left, top, right, bottom) = (int(xmin), int(ymin), int(xmax), int(ymax))
+    draw.line([(left, top), (left, bottom), (right, bottom),
+               (right, top), (left, top)], width=thickness, fill=color)
+    del draw
+    if iter == len(total_annotation):
+        results = path + "/" + "results"
+        if not os.path.exists(results):
+            os.makedirs(results)
+        name = results + "/ " + img_name
+        im_pil.save(name, "JPEG")
+
+
+
 def grab_images(path):
     """"makes a list of the files in each of the paths given, paths [ ]is a list of
         directories, reads these and searches for images with jpg extension, also saves
@@ -498,7 +535,6 @@ def grab_images(path):
     for file in path:
         files = os.listdir(file)
         for name in files:
-            #imgs = []
             with open(file + '/image.txt', 'w') as f:
                 for item in files:
                     if (item.endswith('.jpg')):
@@ -529,7 +565,6 @@ def multiple_small_damages(path):
     #a = [i for i, j in zip(images, images2) if i == j]
     final_list = list(ambas)
 
-
     for img in final_list:
         if os.path.isfile(folder2+"/"+ "no_damage"+ "/"+img):
             #print(img)
@@ -541,10 +576,10 @@ def multiple_small_damages(path):
 
 if __name__ == "__main__":
 
-    WIDTH = 1000
-    HEIGHT = 1000
-    THRESHOLD = 1
-    OVERLAP_TILE = 10
+    WIDTH = 1500
+    HEIGHT = 1500
+    THRESHOLD = 10
+    OVERLAP_TILE = 25
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
     parser.add_argument('--width',required=False,
@@ -580,12 +615,15 @@ if __name__ == "__main__":
 
         for img in imgs_list:
             dic_damages = {}#saving (i,j):name_damage //to check is there is two damage
-            dic_damages2 = {}
-            dic_damages3 ={}
-            dictonary, dictonary1 = {}, {}
+            dictonary, dictonary1, dictonary2 = {}, {}, {}
             img_name = img.strip().split('/')[-1]
             filename = (dir +'/'+img_name)
             img_shape, img = load_image(filename)
+
+
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            im_pil = Image.fromarray(img)
+
             offset = (args.width, args.height)
             num_tiles =  size_tiles(img_shape, offset)
 
@@ -596,7 +634,6 @@ if __name__ == "__main__":
 
             only_img = (img_name.split('.jpg')[0])
             xml_n = only_img + '.xml'
-
 
             tree = ET.ElementTree(file=dir + '/' + xml_n)
             root = tree.getroot()
@@ -612,6 +649,7 @@ if __name__ == "__main__":
                             total_annotation.append(name)
 
             #start iterate for each annotation
+            counter = 1
             for child_of_root in root:
                 if child_of_root.tag == 'object':
                     for child_of_object in child_of_root:
@@ -640,31 +678,72 @@ if __name__ == "__main__":
                                     ymax[category_id] = int(child_of_root.text)
                                     print("this is de ymax: ", ymax[category_id])
 
-                    tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
+                    #---------------------------------------#
+                    #use this function just for normal tiles#
+                    #---------------------------------------#
+                    #tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                    #             ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
 
-                    overlaping_tles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                                  ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
-                                    OVERLAP_TILE)
+
+                    #---------------------------------------#
+                    #use this function for overlapped tiles #
+                    #---------------------------------------#
+                    #overlaping_tles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                    #             ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
+                    #               OVERLAP_TILE)
 
 
+                    #---------------------------------------#
+                    #to see how many tiles for each image   #
+                    #---------------------------------------#
                     #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
                      #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation,dic_damages2, dic_damages3)
 
 
-                    #debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
-
-                    #tiling_images(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
-                     #      ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages)
-
-
+                    #---------------------------------------#
+                    #save just the groundthruth (annotation)#
+                    #---------------------------------------#
                     #saving_only_annotations(dir, img,xmin[category_id],xmax[category_id],
                      #                   ymin[category_id],ymax[category_id],name_damage, only_img)
 
 
+                    #---------------------------------------#
+                    #draw ground thruth and save each image #
+                    #---------------------------------------#
+                    drawing_ground_thuth(dir, im_pil, img_name, xmin[category_id],xmax[category_id],ymin[category_id],
+                                         ymax[category_id],counter,total_annotation, color ='#000000', thickness=10)
+                    counter = counter +1#just to save once
+
+                    #---------------------------------------#
+                    #         just to debug tiles           #
+                    #---------------------------------------#
+                    #a, b = debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
+                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
 
 
-    #multiple_small_damages(dir)
+
+
+
+        #print(a)
+        #print(b)
+
+        #matched_item = set(a.keys()) and set(b.keys())
+        #a1 = set(a)
+        #b1 = set(b)
+
+
+        #for name in a1.intersection(b1):
+        #    print("adonis", name, b[name])
+        #    del b[name]
+       # print("----------------------")
+
+
+        #print("solution")
+        #print(a)
+        #print(b)
+
+
+
+
 
 
