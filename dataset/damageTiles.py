@@ -21,8 +21,6 @@ $ python damageTiles.py [-h] [--width N] [--height N] [--threshold N] [--thresho
 
 '''
 
-from PIL import Image
-import numpy as np
 import cv2
 import math
 import os
@@ -32,16 +30,24 @@ import xml.etree.cElementTree as ET
 import argparse
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
 
+########################################################################
+# PATHS
+########################################################################
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(ROOT_DIR)
-
 print(ROOT_DIR)
 path = []
-#folder1 = os.path.join(ROOT_DIR, "prueba1")
-#folder2 = os.path.join(ROOT_DIR, "../dataset3/base_folder/test")
-folder2 = os.path.join(ROOT_DIR, "test")
+dataset = os.path.join(ROOT_DIR, "test")
+path = [dataset]
 
-path = [folder2]
+########################################################################
+# SETTING
+########################################################################
+WIDTH = 2000
+HEIGHT = 2000
+THRESHOLD = 10
+OVERLAP_TILE = 25
+
 
 def load_image(filename):
     """Loads an image, reads it and returns image size,
@@ -51,10 +57,8 @@ def load_image(filename):
     """
     try:
         img = cv2.imread(filename)
-        print("(H, W, D) = (height, width, depth)")
-        print("shape: ",img.shape)
-        h, w, d = img.shape
-        #size = h * w
+        #print("(H, W, D) = (height, width, depth)")
+        #print("shape: ",img.shape)
     except Exception as e:
         print(e)
         print ("Unable to load image")
@@ -73,6 +77,37 @@ def size_tiles(img_shape, offset):
     num_tiles_h = (int(math.ceil(img_shape[1] / (offset[0] * 1.0))))
     num_tiles = num_tiles_h * num_tiles_w
     return num_tiles
+
+
+def couting_annotations_in_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,
+                                 dic_damages, total_annotation,dic_damages2,dic_damages3 ):
+    dic_4 = {}
+    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
+        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
+            start_y = offset[1] * i
+            stop_y = offset[1] * (i + 1)
+            start_x = offset[0] * j
+            stop_x = offset[0] * (j + 1)
+            tmp_w = min(stop_x, xmax) - max(start_x, xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y, ymin)
+
+            print("---------------------------------------------------------------------------------")
+            print("tile: ", [i],[j])
+            if (tmp_w >= 0) and (tmp_h >= 0):
+                #dic_damages3[(i, j)] = name_damage
+                #dic_damages3.update({name_damage:([i,j])})
+                #dic_damages2= dic_damages2(zip(name_damage,[(i,j)]))
+                dic_4[(i, j)] = name_damage
+                dic_4 = dic_4.copy()
+
+            print("---------------------------------------------------------------------------------")
+    dic_damages2[name_damage] = dic_4.copy().keys()
+    print(dic_damages2)
+
+
+    for key, val in dic_damages2.items():
+        print("manolos")
+        print (key, "=>", val)
 
 
 def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages):
@@ -126,8 +161,8 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
             #two annotations or mor
             if len(total_annotation) > 1:
                 if (tmp_w >= 0) and (tmp_h >= 0):  # check is there is annotations
-
                     print("-------IN THIS TILE THERE IS DAMAGE----------")
+                    print("thresh and threshold", thresh, threshold)
                     if thresh >= threshold:  # percentage of threshold is bigger
 
                         if (i, j) in dic_damages:  # more thant one damage
@@ -204,7 +239,8 @@ def tiling_images(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_dama
             print("--------------------------")
 
 
-def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, overlap_tile):
+def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages,
+                    overlap_tile):
 
     for i in range(int(math.ceil(img_shape[0] / (offset[1] * 1.0)))):
         for j in range(int(math.ceil(img_shape[1] / (offset[0] * 1.0)))):
@@ -319,171 +355,6 @@ def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_da
             print("--------------------------")
 
 
-def couting_annotations_in_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages, total_annotation,dic_damages2,dic_damages3 ):
-    dic_4 = {}
-    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
-        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
-            start_y = offset[1] * i
-            stop_y = offset[1] * (i + 1)
-            start_x = offset[0] * j
-            stop_x = offset[0] * (j + 1)
-            tmp_w = min(stop_x, xmax) - max(start_x, xmin)
-            tmp_h = min(stop_y, ymax) - max(start_y, ymin)
-
-            print("---------------------------------------------------------------------------------")
-            print("tile: ", [i],[j])
-            if (tmp_w >= 0) and (tmp_h >= 0):
-                #dic_damages3[(i, j)] = name_damage
-                #dic_damages3.update({name_damage:([i,j])})
-                #dic_damages2= dic_damages2(zip(name_damage,[(i,j)]))
-                dic_4[(i, j)] = name_damage
-                dic_4 = dic_4.copy()
-
-            print("---------------------------------------------------------------------------------")
-    dic_damages2[name_damage] = dic_4.copy().keys()
-    print(dic_damages2)
-
-
-    for key, val in dic_damages2.items():
-        print("manolos")
-        print (key, "=>", val)
-
-
-def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name, threshold, dic_damages, total_annotation, dictonary, dictonary1):
-    """This function allow debug each tile.
-    img_shape: is the dimension of the image (H,W,D), i dont use depth
-    offset: is heigh and width given, [0][1] as tuple
-    img: array of the image
-    xmin, xmax, ymin, ymax : coordinates in xml file (annotations)
-    name_damage: given in xml file
-    img_name: the name how it will be save it
-    """
-
-    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
-        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
-            start_y = offset[1] * i
-            stop_y = offset[1] * (i + 1)
-            start_x = offset[0] * j
-            stop_x = offset[0] * (j + 1)
-
-            #------------------------------------------#
-            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
-            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
-
-            tmp_xmin1 = min(stop_x, xmax)
-            tmp_xmax1 = max(start_x, xmin)
-            tmp_ymin1 = min(stop_y, ymax)
-            tmp_ymax1 = max(start_y, ymin)
-
-            tmp_xmin = tmp_xmin1 / int(math.floor(img_shape[0] / (offset[1] * 1.0)))
-            tmp_xmax = tmp_xmax1 / int(math.floor(img_shape[0] / (offset[1] * 1.0)))
-            tmp_ymin = tmp_ymin1 / int(math.floor(img_shape[1] / (offset[1] * 1.0)))
-            tmp_ymax = tmp_ymax1 / int(math.floor(img_shape[1] / (offset[1] * 1.0)))
-
-
-
-            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
-            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
-            annotation_dim =  (tmp_w * tmp_h)
-            tile_dim = offset[0] * offset[1]
-
-            tile_percent = (float(annotation_dim) / float(tile_dim))
-            thresh = (tile_percent * 100)
-            # ------------------------------------------#
-            one_damage = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            one_damage_txt = (path + "/" + name_damage + '/' + img_name + str(i) + "_" + str(j) + ".txt")
-
-            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            multi_damage_txt = (path + "/" + "mutiple_damage" + '/' + img_name + str(i) + "_" + str(j) + ".txt")
-
-            small_damage = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            small_damage_txt = (path + "/" + "small_damage" + '/' + img_name + str(i) + "_" + str(j) + ".txt")
-
-            no_damage = (path + '/' + "no_damage" + '/' + img_name + str(i) + "_" + str(j) + ".jpg")
-            # ------------------------------------------#
-
-
-
-            tmp_w_h =  tmp_w * tmp_h
-            first_mul =(stop_x - start_x)
-            second_mul = (stop_y - start_y)
-            tmp_m = first_mul * second_mul
-            # ------------------------------------------#
-            cropped_img = img[start_y:stop_y, start_x:stop_x]
-
-            print("---------------------------------------------------------------------------------")
-            print("tile: ", [i],[j])
-            print(len(total_annotation))
-            p = (float(tmp_w_h) / float(tmp_m))
-            th = p * 100
-
-            #list = []
-
-            if (tmp_w >= 0) and (tmp_h >= 0):  # compruebo si hay anotacin
-                dictonary.update({(i,j):(name_damage)})
-
-            else:
-                dictonary1.update({(i,j):("no damage")})
-            """"
-            if (tmp_w >= 0) and (tmp_h >= 0): #compruebo si hay anotacin
-                #dictonary = ({(i,j):(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)})
-
-                if (i, j) in dictonary:
-                    print('this tilex exis', (i,j))
-
-                    dictonary1.update({(i,j):(cropped_img, name_damage)})
-                else:
-                    dictonary.update({(i,j):(cropped_img, name_damage)})
-
-                matched_item = set(dictonary.keys()) and set(dictonary1.keys())
-
-                print(type(matched_item))
-                print(matched_item)
-
-
-                for x in matched_item:
-                    print("thisis ", x)
-                    if x in dictonary:
-                        print("solution ", dictonary[x])
-                        repeat_tile = dictonary[x]
-
-                    if x in dictonary1:
-                        print("solution1 ", dictonary1[x])
-                        repeat_tile1 = dictonary1[x]
-
-                    final = (repeat_tile, repeat_tile1)
-
-
-                if (i, j) in dic_damages:
-
-                    if dic_damages[(i, j)] == name_damage:
-                        print("same type")
-                        #print(tmp_xmin1, tmp_xmax1, tmp_ymin1, tmp_ymax1)
-                        #print(tmp_xmin, tmp_xmax, tmp_ymin, tmp_ymax)
-
-
-                    else:
-                        print("2 DIFFERENT DAMAGE")
-
-
-
-                print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
-
-
-
-                dic_damages[(i, j)] = name_damage
-                print(dic_damages[(i, j)])
-
-            print("---------------------------------------------------------------------------------")
-
-        else:
-            dictonary2.update({(i,j):(cropped_img, "no damage")})
-            """""
-
-    return dictonary, dictonary1
-
-
-
 def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_name):
     """save only the annotation, this is only if you want to check where is exactly
        the annotation in you image, using xml coordinates.
@@ -500,7 +371,7 @@ def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_na
     print("saving image")
 
 
-def drawing_ground_thuth(path, im_pil, img_name ,xmin, xmax, ymin, ymax, iter, total_annotation, color, thickness):
+def drawing_ground_thruth(path, im_pil, img_name ,xmin, xmax, ymin, ymax, iter, total_annotation, color, thickness):
     """This function draws all annotations from the coordinates of the xml file, at
     the end it only saves one image.
 
@@ -519,12 +390,11 @@ def drawing_ground_thuth(path, im_pil, img_name ,xmin, xmax, ymin, ymax, iter, t
                (right, top), (left, top)], width=thickness, fill=color)
     del draw
     if iter == len(total_annotation):
-        results = path + "/" + "results"
+        results = path + "/" + "ground_thruth"
         if not os.path.exists(results):
             os.makedirs(results)
         name = results + "/ " + img_name
         im_pil.save(name, "JPEG")
-
 
 
 def grab_images(path):
@@ -572,14 +442,77 @@ def multiple_small_damages(path):
             print("deleting: ", img)
 
 
+def debug_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name, threshold, dic_damages,
+                total_annotation, dictonary, dictonary1, iter):
 
+    for i in range(int(math.floor(img_shape[0] / (offset[1] * 1.0)))):
+        for j in range(int(math.floor(img_shape[1] / (offset[0] * 1.0)))):
+            start_y = offset[1] * i
+            stop_y = offset[1] * (i + 1)
+            start_x = offset[0] * j
+            stop_x = offset[0] * (j + 1)
+
+            #------------------------------------------#
+            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
+            annotation_dim =  (tmp_w * tmp_h)
+            tile_dim = offset[0] * offset[1]
+            tile_percent = (float(annotation_dim) / float(tile_dim))
+            thresh = (tile_percent * 100)
+            # ------------------------------------------#
+
+            print("---------------------------------------------------------------------------------")
+            print("tile: ", [i],[j])
+
+            if (tmp_w >= 0) and (tmp_h >= 0):  # compruebo si hay anotacion
+                print(thresh)
+                print("--->>>>>>IN THIS TILE THERE IS DAMAGE<<<<<<<----")
+                dictonary.update({(i,j):(name_damage, start_y, stop_y, start_x, stop_x)})
+
+            else:
+                dictonary1.update({(i,j):("no_damage", start_y, stop_y, start_x, stop_x)})
+
+    return dictonary, dictonary1
+
+
+'''
+    if iter == len(total_annotation):
+
+        a = set(dictonary) #dict damages--> {(0,1):(122,121,121,121)}
+        b = set(dictonary1)
+
+        for name in a.intersection(b):
+            del dictonary1[name]
+
+        for key, val in dictonary1.items():
+            (start_y, stop_y, start_x, stop_x) = (val[1], val[2], val[3], val[4])
+            no_damage = (path + "/" + str(val[0]) + '/' + img_name + "_" +str(key[0])+"_"+str(key[1])+".jpg")
+            cropped = img[start_y:stop_y, start_x:stop_x]
+
+            if not os.path.exists(path + "/" + val[0]):
+                os.mkdir(path + "/" + val[0])
+
+            cv2.imwrite(no_damage, cropped)
+
+        for key, val in dictonary.items():
+            (start_y, stop_y, start_x, stop_x) = (val[1], val[2], val[3], val[4])
+            one_damage = (path + "/" + str(val[0]) + '/' + img_name + "_" + str(key[0]) + "_" + str(key[1]) + ".jpg")
+            cropped = img[start_y:stop_y, start_x:stop_x]
+
+            if not os.path.exists(path + "/" + val[0]):
+                os.mkdir(path + "/" + val[0])
+            cv2.imwrite(one_damage, cropped)
+
+    return dictonary, dictonary1
+'''
+
+
+
+########################################################################
+# MAIN
+########################################################################
 
 if __name__ == "__main__":
-
-    WIDTH = 1500
-    HEIGHT = 1500
-    THRESHOLD = 10
-    OVERLAP_TILE = 25
 
     parser = argparse.ArgumentParser(description='_Process dataset_')
     parser.add_argument('--width',required=False,
@@ -620,9 +553,8 @@ if __name__ == "__main__":
             filename = (dir +'/'+img_name)
             img_shape, img = load_image(filename)
 
-
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            im_pil = Image.fromarray(img)
+            img_pil = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            im_pil = Image.fromarray(img_pil)
 
             offset = (args.width, args.height)
             num_tiles =  size_tiles(img_shape, offset)
@@ -696,8 +628,9 @@ if __name__ == "__main__":
                     #---------------------------------------#
                     #to see how many tiles for each image   #
                     #---------------------------------------#
-                    #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation,dic_damages2, dic_damages3)
+                    #couting_annotations_in_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],
+                    #                   ymin[category_id],ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages,
+                    #                   total_annotation,dic_damages2, dic_damages3)
 
 
                     #---------------------------------------#
@@ -710,37 +643,25 @@ if __name__ == "__main__":
                     #---------------------------------------#
                     #draw ground thruth and save each image #
                     #---------------------------------------#
-                    drawing_ground_thuth(dir, im_pil, img_name, xmin[category_id],xmax[category_id],ymin[category_id],
-                                         ymax[category_id],counter,total_annotation, color ='#000000', thickness=10)
-                    counter = counter +1#just to save once
+                    #drawing_ground_thruth(dir, im_pil, img_name, xmin[category_id],xmax[category_id],ymin[category_id],
+                     #                    ymax[category_id],counter,total_annotation, color ='#000000', thickness=10)
+
 
                     #---------------------------------------#
                     #         just to debug tiles           #
                     #---------------------------------------#
-                    #a, b = debug_tiles(dir, img_shape, offset, img,xmin[category_id],xmax[category_id],ymin[category_id],
-                     #           ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages, total_annotation, dictonary, dictonary1)
+                    #debug_tiles(dir, img_shape, offset, img, xmin[category_id],xmax[category_id],
+                    #                   ymin[category_id],ymax[category_id],name_damage, only_img,THRESHOLD, dic_damages,
+                    #                   total_annotation, dictonary, dictonary1,counter)
+
+                    counter = counter + 1  # just to save once
 
 
 
 
 
-        #print(a)
-        #print(b)
-
-        #matched_item = set(a.keys()) and set(b.keys())
-        #a1 = set(a)
-        #b1 = set(b)
 
 
-        #for name in a1.intersection(b1):
-        #    print("adonis", name, b[name])
-        #    del b[name]
-       # print("----------------------")
-
-
-        #print("solution")
-        #print(a)
-        #print(b)
 
 
 
