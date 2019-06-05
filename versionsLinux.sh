@@ -13,5 +13,10 @@ cd  ../inception_with_results
 git checkout ClassificationIN1.1
 cd ../tile_for_classification
 
+mkdir ../inception_overlay_tiles
+git clone .git ../inception_overlay_tiles
+cd  ../inception_overlay_tiles
+git checkout ClassificationIN1.2
+cd ../tile_for_classification
 
 read -n1 -r -p "Press any key to continue..." key
