@@ -28,6 +28,7 @@ import os.path as path
 import sys
 import xml.etree.cElementTree as ET
 import argparse
+import numpy as np
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
 
 ########################################################################
@@ -43,8 +44,8 @@ path = [dataset]
 ########################################################################
 # SETTING
 ########################################################################
-WIDTH = 2000
-HEIGHT = 2000
+WIDTH = 1000
+HEIGHT = 1000
 THRESHOLD = 10
 OVERLAP_TILE = 25
 
@@ -59,6 +60,8 @@ def load_image(filename):
         img = cv2.imread(filename)
         #print("(H, W, D) = (height, width, depth)")
         #print("shape: ",img.shape)
+        print("here")
+        print(img)
     except Exception as e:
         print(e)
         print ("Unable to load image")
@@ -354,6 +357,130 @@ def overlaping_tles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_da
 
             print("--------------------------")
 
+def overlay_small_tiles(path,img_shape, offset, img ,xmin, xmax, ymin, ymax, name_damage, img_name,threshold,dic_damages,
+                    overlap_tile):
+
+    for i in range(int(math.ceil(img_shape[0] / (offset[1] * 1.0)))):
+        for j in range(int(math.ceil(img_shape[1] / (offset[0] * 1.0)))):
+
+            small = False
+            calc_over = (offset[0] * overlap_tile) / 100
+            overlap_tiles = offset[0] - calc_over
+
+
+            start_y = (overlap_tiles * i )
+            stop_y = start_y + offset[1]
+            start_x = (overlap_tiles * j )
+            stop_x = start_x + offset[0]
+            cropped_img = img[start_y:stop_y,start_x:stop_x ]
+            #------------------------------------------#
+
+            tmp_w = min(stop_x, xmax) - max(start_x,xmin)
+            tmp_h = min(stop_y, ymax) - max(start_y,ymin)
+            annotation_dim =  (tmp_w * tmp_h)
+            tile_dim = offset[0] * offset[1]
+
+            tile_percent = (float(annotation_dim) / float(tile_dim))
+            thresh = (tile_percent * 100)
+            #-------------------------------------------#
+            one_damage = (path + "/" + name_damage + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            multi_damage = (path + "/" + "mutiple_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            small_damage = (path + "/" + "small_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+            no_damage = (path + '/' + "no_damage" + '/' + img_name  + "_" +str(i) + "_" + str(j) + "_over"+".jpg")
+
+            if xmin > start_x and xmin<stop_x and xmin > start_x and ymin < stop_y and xmax > start_x and xmax < stop_x \
+                    and ymax > start_y and ymax <stop_y:
+                small = True
+
+            print("--------------------------")
+            print("this tile : ", [i], [j])
+
+            if small == True:
+                print("saving small damage")
+            # print("total_annotation, ",len(total_annotation))
+
+            # two annotations or mor
+            if len(total_annotation) > 1:
+                if (tmp_w >= 0) and (tmp_h >= 0 or small == True):  # check is there is annotations
+
+                    print("-------IN THIS TILE THERE IS DAMAGE----------")
+                    if thresh >= threshold or small == True:  # percentage of threshold is bigger
+
+                        if (i, j) in dic_damages:  # more thant one damage
+                            if dic_damages[(i, j)] == name_damage:  # 2 damages == same typ
+                                print("same damage")
+                                if not os.path.exists(path + "/" + name_damage):
+                                    os.mkdir(path + "/" + name_damage)
+                                    print("folder created: ", name_damage)
+                                    cv2.imwrite(one_damage, cropped_img)
+                                else:
+                                    cv2.imwrite(one_damage, cropped_img)
+
+                            if dic_damages[(i, j)] != name_damage:  # 2 damages != different type
+                                print("different damage")
+                                if not os.path.exists(path + "/" + "mutiple_damage"):
+                                    os.mkdir(path + "/" + "mutiple_damage")
+                                    print("folder created: ", "mutiple_damage")
+                                    cv2.imwrite(multi_damage, cropped_img)
+                                else:
+                                    cv2.imwrite(multi_damage, cropped_img)
+                        else:
+
+                            dic_damages[(i, j)] = name_damage
+                            print("here:", dic_damages[(i, j)])
+                            print("here:", dic_damages)
+
+                            if not os.path.exists(path + "/" + name_damage):
+                                os.mkdir(path + "/" + name_damage)
+                                print("folder created: ", name_damage)
+                                cv2.imwrite(one_damage, cropped_img)
+
+                            else:
+                                cv2.imwrite(one_damage, cropped_img)
+
+                    # small multiple damage
+                    else:
+                        if not os.path.exists(path + "/" + "small_damage"):
+                            os.mkdir(path + "/" + "small_damage")
+                            print("folder created: ", "small_damage")
+                            cv2.imwrite(small_damage, cropped_img)
+                        else:
+                            cv2.imwrite(small_damage, cropped_img)
+
+            # only one annotation
+            if len(total_annotation) == 1:
+                if tmp_w >= 0 and tmp_h >= 0 or small == True:
+                    print("percentaje",thresh)
+
+                    if thresh >= threshold or small ==True:  # check percentage of damage inside tile
+                        print("this is threshold:, ", thresh, threshold)
+                        if not os.path.exists(path + "/" + name_damage):
+                            os.mkdir(path + "/" + name_damage)
+                            print("folder created: ", name_damage)
+                            cv2.imwrite(one_damage, cropped_img)
+                        else:
+                            cv2.imwrite(one_damage, cropped_img)
+
+                    else:
+                        print("saving one small damage ")
+                        if not os.path.exists(path + "/" + "small_damage"):
+                            os.mkdir(path + "/" + "small_damage")
+                            print("folder created: ", "small_damage")
+                            cv2.imwrite(small_damage, cropped_img)
+                        else:
+                            cv2.imwrite(small_damage, cropped_img)
+
+                else:
+                    print("no damage tile")
+                    if not os.path.exists(path + "/" + "no_damage"):
+                        os.mkdir(path + "/" + "no_damage")
+                        print("folder created: ", "no_damage")
+                        cv2.imwrite(no_damage, cropped_img)
+                    else:
+                        cv2.imwrite(no_damage, cropped_img)
+
+            print("--------------------------")
+
 
 def saving_only_annotations(path,img ,xmin, xmax, ymin, ymax,name_damage, img_name):
     """save only the annotation, this is only if you want to check where is exactly
@@ -394,7 +521,9 @@ def drawing_ground_thruth(path, im_pil, img_name ,xmin, xmax, ymin, ymax, iter, 
         if not os.path.exists(results):
             os.makedirs(results)
         name = results + "/ " + img_name
-        im_pil.save(name, "JPEG")
+
+
+        im_np.save(name, "JPEG")
 
 
 def grab_images(path):
@@ -624,6 +753,12 @@ if __name__ == "__main__":
                     #             ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
                     #               OVERLAP_TILE)
 
+                    #---------------------------------------#
+                    #to keep always 4 points in classes     #
+                    #---------------------------------------#
+                    overlay_small_tiles(dir, img_shape, offset, img, xmin[category_id], xmax[category_id],
+                                 ymin[category_id], ymax[category_id], name_damage, only_img, THRESHOLD, dic_damages,
+                                   OVERLAP_TILE)
 
                     #---------------------------------------#
                     #to see how many tiles for each image   #
@@ -644,7 +779,7 @@ if __name__ == "__main__":
                     #draw ground thruth and save each image #
                     #---------------------------------------#
                     #drawing_ground_thruth(dir, im_pil, img_name, xmin[category_id],xmax[category_id],ymin[category_id],
-                     #                    ymax[category_id],counter,total_annotation, color ='#000000', thickness=10)
+                    #                     ymax[category_id],counter,total_annotation, color ='#000000', thickness=10)
 
 
                     #---------------------------------------#
