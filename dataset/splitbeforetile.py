@@ -69,16 +69,6 @@ if __name__ == "__main__":
         file_to_copy_xml = os.path.join(folder_to_split, only_xml)
         copyfile(file_to_copy_xml, dest_test + "/" + only_xml)
 
-        '''
-        exists = os.path.isfile(folder_to_split+ "/"+only_xml)
-        
-        path_xml = os.path.join(folder_to_split+ "/"+only_xml)
-        if exists:
-            copyfile(file_to_copy, dest_test + "/" + path_xml)
-        else:
-            "error"
-        # Keep presets
-        '''
     indexs_train = [images.index(x) for x in images]
     training = list(set(indexs_train) ^ set(indexs_test))  # rest for training
 
