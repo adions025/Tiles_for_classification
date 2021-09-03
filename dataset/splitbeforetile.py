@@ -79,13 +79,7 @@ if __name__ == "__main__":
             "error"
         # Keep presets
         '''
-
-    #indexs_train = []
-    #for i in images:
-    #    indexs_train.append(images.index(i))
-
     indexs_train = [images.index(x) for x in images]
-
     training = list(set(indexs_train) ^ set(indexs_test))  # rest for training
 
     for i in training:
